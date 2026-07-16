@@ -21,3 +21,16 @@ jobs:
             -scheme TempoRep \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project TempoRep.xcodeproj \
+            -scheme TempoRep \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: List available simulators (only if tests failed to find a destination)
+        if: failure()
+        run: xcrun simctl list devices available

@@ -51,6 +51,17 @@ xcodebuild build -project TempoRep.xcodeproj -scheme TempoRep \
 
 Note: haptics don't fire in the simulator — run on a device to feel them. To run on a device, set your development team under *Signing & Capabilities* first.
 
+## Running the tests
+
+Press **⌘U** in Xcode, or from the command line:
+
+```sh
+xcodebuild test -project TempoRep.xcodeproj -scheme TempoRep \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO
+```
+
+`TempoRepTests` covers the timeline-building logic in `WorkoutEngine.buildTimeline` (bilateral/unilateral/switch-pause/zero-duration-phase-skipping/start-phase reordering), `WorkoutConfig`'s Codable round-trip, the bundled exercise dataset, preset application, and localization catalog completeness across all 4 languages.
+
 ## Project layout
 
 ```
@@ -74,4 +85,11 @@ TempoRep/
   Views/ExercisePickerView.swift  Searchable exercise picker
   Resources/exercises.json    Bundled exercise dataset (name/category/muscles/equipment, no images)
   Localizable.xcstrings       String catalog (en, nl, fr, de)
+
+TempoRepTests/
+  WorkoutEngineTests.swift    Timeline-building logic (bilateral/unilateral/switch/reordering)
+  WorkoutConfigTests.swift    Codable round-trip, computed properties
+  WorkoutPresetTests.swift    Preset application and persistence shape
+  ExerciseDatabaseTests.swift  Bundled dataset loads correctly, no duplicate IDs
+  LocalizationCatalogTests.swift  Every checked key resolves in all 4 languages
 ```
