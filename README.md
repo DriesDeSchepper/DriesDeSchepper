@@ -21,6 +21,8 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Automatic rest countdown between sets
 - Pause/resume and stop
+- Settings (tempo, reps, sets, rest, voice) are remembered between launches
+- Workout history: finished workouts are logged with tempo, sets × reps, and time under tension
 - Screen stays awake during a workout
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks
 - Cues play even when the phone is on silent (`.playback` audio session category)
@@ -55,6 +57,8 @@ TempoRep/
   Services/SoundPlayer.swift  Synthesized beep cues via AVFoundation
   Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
   Services/HapticsPlayer.swift  UIKit feedback generators
+  Services/HistoryStore.swift  Persisted log of completed workouts
   Views/SetupView.swift       Tempo/reps/sets/rest configuration
   Views/WorkoutView.swift     In-workout display and controls
+  Views/HistoryView.swift     Workout history sheet
 ```

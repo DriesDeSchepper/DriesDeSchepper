@@ -16,7 +16,11 @@ final class WorkoutEngine {
         case finished
     }
 
-    var config = WorkoutConfig()
+    var config = WorkoutConfig.loadSaved() {
+        didSet { config.save() }
+    }
+
+    let history = HistoryStore()
 
     private(set) var state: State = .idle
     private(set) var currentPhase: Phase = .getReady
@@ -181,6 +185,16 @@ final class WorkoutEngine {
         if config.voiceCues {
             speech.speak(Phase.done.voiceWord)
         }
+        history.add(WorkoutRecord(
+            id: UUID(),
+            date: Date(),
+            tempoDigits: config.tempoDigits,
+            sets: config.sets,
+            repsPerSet: config.repsPerSet,
+            restSeconds: config.restSeconds,
+            timeUnderTension: timeline.filter { $0.rep > 0 }.reduce(0) { $0 + $1.duration },
+            totalDuration: timeline.last?.end ?? 0
+        ))
     }
 
     // MARK: - Cues

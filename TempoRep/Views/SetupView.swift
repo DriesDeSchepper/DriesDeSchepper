@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SetupView: View {
     @Bindable var engine: WorkoutEngine
+    @State private var showHistory = false
 
     var body: some View {
         ZStack {
@@ -27,6 +28,20 @@ struct SetupView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
             }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                showHistory = true
+            } label: {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44)
+            }
+            .padding(.trailing, 12)
+        }
+        .sheet(isPresented: $showHistory) {
+            HistoryView(store: engine.history)
         }
         .safeAreaInset(edge: .bottom) { startButton }
     }

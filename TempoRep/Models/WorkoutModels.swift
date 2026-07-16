@@ -1,7 +1,7 @@
 import Foundation
 
 /// User-configurable workout parameters.
-struct WorkoutConfig: Equatable {
+struct WorkoutConfig: Equatable, Codable {
     /// Tempo digits: [eccentric, pause at bottom, concentric, pause at top].
     var tempoDigits: [Int] = [4, 0, 1, 0]
     var repsPerSet: Int = 8
@@ -20,6 +20,42 @@ struct WorkoutConfig: Equatable {
         [2, 0, 2, 0],
         [5, 0, 5, 0],
     ]
+
+    // MARK: - Persistence
+
+    private static let defaultsKey = "workoutConfig"
+
+    /// Returns the last-used configuration, or defaults on first launch
+    /// (or if the stored data doesn't decode).
+    static func loadSaved() -> WorkoutConfig {
+        guard let data = UserDefaults.standard.data(forKey: defaultsKey),
+              let decoded = try? JSONDecoder().decode(WorkoutConfig.self, from: data),
+              decoded.tempoDigits.count == 4 else {
+            return WorkoutConfig()
+        }
+        return decoded
+    }
+
+    func save() {
+        if let data = try? JSONEncoder().encode(self) {
+            UserDefaults.standard.set(data, forKey: Self.defaultsKey)
+        }
+    }
+}
+
+/// One completed workout, as shown on the history screen.
+struct WorkoutRecord: Identifiable, Codable {
+    let id: UUID
+    let date: Date
+    let tempoDigits: [Int]
+    let sets: Int
+    let repsPerSet: Int
+    let restSeconds: Int
+    /// Total seconds spent inside rep phases (excludes rest and get-ready).
+    let timeUnderTension: TimeInterval
+    let totalDuration: TimeInterval
+
+    var tempoString: String { tempoDigits.map(String.init).joined() }
 }
 
 enum Phase: Equatable {
