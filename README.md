@@ -13,7 +13,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 
 ## Features
 
-- Tempo input as 4 digits with presets (4010, 3110, 2020, 5050)
+- Tempo input as 4 digits, with a toggle for which phase a rep starts with (eccentric or concentric)
 - Reps per set, number of sets, rest between sets
 - Huge phase name + countdown ring, readable from across the room
 - Distinct sound + haptic cues for phase changes, rep completion, and set completion
@@ -21,6 +21,8 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Optional voice countdown: spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
+- Bundled exercise database (873 exercises from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db), no network calls): searchable picker with muscle/equipment filters and a recents list; picking an exercise suggests unilateral mode and starting phase (deadlifts/pull-ups lead with the concentric phase) — or skip it and run a bare timer
+- 4 built-in presets (Squat, Push-Up, Single-Leg RDL, Deadlift) that set exercise + tempo + reps + sets + rest + unilateral settings all at once
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
@@ -55,15 +57,20 @@ Note: haptics don't fire in the simulator — run on a device to feel them. To r
 TempoRep/
   TempoRepApp.swift              App entry point
   Models/WorkoutModels.swift  Config, phases, timeline segments
+  Models/Exercise.swift       Bundled exercise-database entry
+  Models/WorkoutPreset.swift  Built-in exercise+settings presets
   Engine/WorkoutEngine.swift  Elapsed-time-driven workout state machine
   Services/SoundPlayer.swift  Synthesized beep cues via AVFoundation
   Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
   Services/HapticsPlayer.swift  UIKit feedback generators
   Services/HistoryStore.swift  Persisted log of completed workouts
   Services/LocalizationManager.swift  System-language / override language resolution
-  Views/SetupView.swift       Tempo/reps/sets/rest configuration
+  Services/ExerciseDatabase.swift  Loads the bundled dataset, tracks recents
+  Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
   Views/WorkoutView.swift     In-workout display and controls
   Views/HistoryView.swift     Workout history sheet
   Views/SettingsView.swift    Language override
+  Views/ExercisePickerView.swift  Searchable exercise picker
+  Resources/exercises.json    Bundled exercise dataset (name/category/muscles/equipment, no images)
   Localizable.xcstrings       String catalog (en, nl, fr, de)
 ```

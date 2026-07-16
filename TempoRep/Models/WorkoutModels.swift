@@ -1,5 +1,16 @@
 import Foundation
 
+/// Which phase a rep's tempo sequence leads with. Most lifts lower first
+/// (eccentric); a few — deadlifts, pull-ups — start by lifting from a dead
+/// stop, so their tempo sequence leads with the concentric phase instead.
+/// Either way the 4 tempo digits keep their usual meaning (1st = eccentric
+/// duration, 3rd = concentric duration, etc.) — only the execution order
+/// within a rep changes.
+enum StartPhase: String, Codable {
+    case eccentric
+    case concentric
+}
+
 /// User-configurable workout parameters.
 struct WorkoutConfig: Equatable, Codable {
     /// Tempo digits: [eccentric, pause at bottom, concentric, pause at top].
@@ -12,18 +23,15 @@ struct WorkoutConfig: Equatable, Codable {
     /// Pause between sides, in seconds. 0 = immediate, no dedicated pause.
     var switchSeconds: Int = 10
     var startingSide: Side = .left
+    var startPhase: StartPhase = .eccentric
+    /// ID into the bundled exercise database (Resources/exercises.json); nil
+    /// runs a bare timer with no exercise attached.
+    var selectedExerciseID: String?
 
     /// A concentric digit of 0 means "explosive" — timed as 1 second.
     var concentricSeconds: Int { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
 
     var tempoString: String { tempoDigits.map(String.init).joined() }
-
-    static let presets: [[Int]] = [
-        [4, 0, 1, 0],
-        [3, 1, 1, 0],
-        [2, 0, 2, 0],
-        [5, 0, 5, 0],
-    ]
 
     // MARK: - Persistence
 

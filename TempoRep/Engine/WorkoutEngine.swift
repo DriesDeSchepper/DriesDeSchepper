@@ -102,6 +102,22 @@ final class WorkoutEngine {
             cursor += seconds
         }
 
+        // A rep's 4 tempo phases in execution order. The digits keep their
+        // usual meaning either way — only which phase leads changes, for
+        // exercises (deadlifts, pull-ups) that start by lifting.
+        func phaseSeconds(_ phase: Phase) -> TimeInterval {
+            switch phase {
+            case .eccentric: return TimeInterval(config.tempoDigits[0])
+            case .pauseBottom: return TimeInterval(config.tempoDigits[1])
+            case .concentric: return TimeInterval(config.concentricSeconds)
+            case .pauseTop: return TimeInterval(config.tempoDigits[3])
+            default: return 0
+            }
+        }
+        let repPhaseOrder: [Phase] = config.startPhase == .concentric
+            ? [.concentric, .pauseTop, .eccentric, .pauseBottom]
+            : [.eccentric, .pauseBottom, .concentric, .pauseTop]
+
         add(.getReady, rep: 0, set: 1, side: nil, seconds: 3)
 
         // Bilateral work has one (sideless) pass per set; unilateral work
@@ -113,10 +129,9 @@ final class WorkoutEngine {
         for set in 1...config.sets {
             for (sideIndex, side) in sides.enumerated() {
                 for rep in 1...config.repsPerSet {
-                    add(.eccentric, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[0]))
-                    add(.pauseBottom, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[1]))
-                    add(.concentric, rep: rep, set: set, side: side, seconds: TimeInterval(config.concentricSeconds))
-                    add(.pauseTop, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[3]))
+                    for phase in repPhaseOrder {
+                        add(phase, rep: rep, set: set, side: side, seconds: phaseSeconds(phase))
+                    }
                 }
                 let isLastSide = sideIndex == sides.count - 1
                 if !isLastSide, let nextSide = side?.opposite {

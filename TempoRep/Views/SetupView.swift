@@ -5,6 +5,8 @@ struct SetupView: View {
     @Environment(\.locale) private var locale
     @State private var showHistory = false
     @State private var showSettings = false
+    @State private var showExercisePicker = false
+    private let exerciseDatabase = ExerciseDatabase.shared
 
     var body: some View {
         ZStack {
@@ -22,6 +24,7 @@ struct SetupView: View {
                     }
                     .padding(.top, 24)
 
+                    exerciseSection
                     tempoSection
                     presetSection
                     countersSection
@@ -62,10 +65,41 @@ struct SetupView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $showExercisePicker) {
+            ExercisePickerView(engine: engine)
+        }
         .safeAreaInset(edge: .bottom) { startButton }
     }
 
     // MARK: - Sections
+
+    private var exerciseSection: some View {
+        Button {
+            showExercisePicker = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Exercise")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text(verbatim: selectedExercise?.name ?? L("No exercise selected", locale))
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var selectedExercise: Exercise? {
+        exerciseDatabase.exercise(id: engine.config.selectedExerciseID)
+    }
 
     private var tempoSection: some View {
         VStack(spacing: 12) {
@@ -78,23 +112,46 @@ struct SetupView: View {
             Text("Concentric 0 = explosive (timed as 1 s)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            HStack {
+                Text("Starts with")
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Picker(selection: $engine.config.startPhase) {
+                    Text("Eccentric").tag(StartPhase.eccentric)
+                    Text("Concentric").tag(StartPhase.concentric)
+                } label: {
+                    EmptyView()
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+            }
+            .padding(.top, 4)
         }
     }
 
     private var presetSection: some View {
-        HStack(spacing: 12) {
-            ForEach(WorkoutConfig.presets, id: \.self) { preset in
-                let selected = engine.config.tempoDigits == preset
+        HStack(spacing: 10) {
+            ForEach(WorkoutPreset.builtIn) { preset in
                 Button {
-                    engine.config.tempoDigits = preset
+                    preset.apply(to: &engine.config)
+                    if let exercise = exerciseDatabase.exercise(id: preset.exerciseID) {
+                        exerciseDatabase.markUsed(exercise)
+                    }
                 } label: {
-                    Text(preset.map(String.init).joined())
-                        .font(.system(size: 17, weight: .bold, design: .rounded).monospacedDigit())
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 14)
+                    VStack(spacing: 2) {
+                        Text(verbatim: preset.displayName)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                        Text(verbatim: preset.tempoDigits.map(String.init).joined())
+                            .font(.system(size: 11, weight: .medium, design: .rounded).monospacedDigit())
+                            .opacity(0.7)
+                    }
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
                 }
-                .background(selected ? Color.accentColor : Color.white.opacity(0.1), in: Capsule())
-                .foregroundStyle(selected ? .black : .white)
+                .background(Color.white.opacity(0.1), in: Capsule())
+                .foregroundStyle(.white)
             }
         }
     }
