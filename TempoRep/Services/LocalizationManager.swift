@@ -4,8 +4,18 @@ import Observation
 /// Resolves a catalog key to a string in an explicit locale. Used anywhere
 /// outside a SwiftUI `Text` (which localizes via `\.locale` in the
 /// environment automatically): voice cues, and any hand-formatted string.
-func L(_ key: String.LocalizationValue, _ locale: Locale) -> String {
-    String(localized: key, locale: locale)
+///
+/// Loads the target language's compiled `.lproj` bundle directly rather
+/// than using `String(localized:locale:)` — in testing, that call
+/// consistently returned the English value regardless of the `locale`
+/// argument, so this uses the classic, unambiguous `Bundle` API instead.
+func L(_ key: String, _ locale: Locale) -> String {
+    let languageCode = locale.language.languageCode?.identifier ?? locale.identifier
+    guard let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+          let bundle = Bundle(path: path) else {
+        return Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+    }
+    return bundle.localizedString(forKey: key, value: nil, table: nil)
 }
 
 /// Tracks the app's language: nil follows the iOS system language: a

@@ -2,9 +2,9 @@ import Testing
 import Foundation
 @testable import TempoRep
 
-/// Guards against a key existing in only some of the app's 4 languages —
-/// every call here is a literal (not a dynamic string), since
-/// `String.LocalizationValue` resolves from source literals.
+/// Guards against a key existing in only some of the app's 4 languages, and
+/// against `L()`'s per-language Bundle lookup regressing to always
+/// returning English (exactly the bug this suite caught during development).
 struct LocalizationCatalogTests {
 
     @Test(arguments: ["en", "nl", "fr", "de"])
