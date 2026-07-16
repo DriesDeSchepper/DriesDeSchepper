@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WorkoutView: View {
     let engine: WorkoutEngine
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ZStack {
@@ -18,7 +19,7 @@ struct WorkoutView: View {
 
     private var activeView: some View {
         VStack(spacing: 0) {
-            Text(header)
+            Text(verbatim: header)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
@@ -26,14 +27,14 @@ struct WorkoutView: View {
 
             Spacer()
 
-            Text(engine.currentPhase.title)
+            Text(verbatim: engine.currentPhase.title(locale))
                 .font(.system(size: 54, weight: .heavy, design: .rounded))
                 .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(.white))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .padding(.horizontal, 24)
 
-            Text(subtitle)
+            Text(verbatim: subtitle)
                 .font(.system(size: 20, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)
@@ -58,7 +59,7 @@ struct WorkoutView: View {
                 .rotationEffect(.degrees(-90))
 
             VStack(spacing: 4) {
-                Text(countdownText)
+                Text(verbatim: countdownText)
                     .font(.system(size: 96, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .minimumScaleFactor(0.4)
@@ -112,11 +113,11 @@ struct WorkoutView: View {
     private var finishedView: some View {
         VStack(spacing: 20) {
             Spacer()
-            Text("DONE")
+            Text(verbatim: Phase.done.title(locale))
                 .font(.system(size: 72, weight: .heavy, design: .rounded))
                 .tracking(4)
                 .foregroundStyle(Color.accentColor)
-            Text("\(engine.config.sets) sets · \(engine.config.repsPerSet) reps @ \(engine.config.tempoString)")
+            Text(verbatim: summaryText)
                 .font(.system(size: 18, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
             Spacer()
@@ -136,26 +137,32 @@ struct WorkoutView: View {
         }
     }
 
+    private var summaryText: String {
+        String(format: L("%d sets · %d reps @ %@", locale),
+               engine.config.sets, engine.config.repsPerSet, engine.config.tempoString)
+    }
+
     // MARK: - Derived text
 
     private var header: String {
         switch engine.currentPhase {
         case .getReady:
-            return "SET \(engine.currentSet) OF \(engine.config.sets)"
+            return String(format: L("SET %d OF %d", locale), engine.currentSet, engine.config.sets)
         case .rest:
-            return "SET \(engine.currentSet) OF \(engine.config.sets) DONE"
+            return String(format: L("SET %d OF %d DONE", locale), engine.currentSet, engine.config.sets)
         case .done:
             return ""
         default:
-            return "REP \(engine.currentRep)/\(engine.config.repsPerSet) · SET \(engine.currentSet)/\(engine.config.sets)"
+            return String(format: L("REP %d/%d · SET %d/%d", locale),
+                          engine.currentRep, engine.config.repsPerSet, engine.currentSet, engine.config.sets)
         }
     }
 
     private var subtitle: String {
         if engine.currentPhase == .rest {
-            return "up next: set \(engine.currentSet + 1)"
+            return String(format: L("up next: set %d", locale), engine.currentSet + 1)
         }
-        return engine.currentPhase.subtitle
+        return engine.currentPhase.subtitle(locale)
     }
 
     private var countdownText: String {

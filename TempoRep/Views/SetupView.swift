@@ -2,7 +2,9 @@ import SwiftUI
 
 struct SetupView: View {
     @Bindable var engine: WorkoutEngine
+    @Environment(\.locale) private var locale
     @State private var showHistory = false
+    @State private var showSettings = false
 
     var body: some View {
         ZStack {
@@ -11,7 +13,7 @@ struct SetupView: View {
             ScrollView {
                 VStack(spacing: 32) {
                     VStack(spacing: 4) {
-                        Text("TEMPOREP")
+                        Text(verbatim: "TEMPOREP")
                             .font(.system(size: 40, weight: .heavy, design: .rounded))
                             .tracking(8)
                         Text("tempo training timer")
@@ -30,18 +32,34 @@ struct SetupView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button {
-                showHistory = true
-            } label: {
-                Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 44, height: 44)
+            HStack(spacing: 4) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(Text("Settings"))
+
+                Button {
+                    showHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(Text("History"))
             }
-            .padding(.trailing, 12)
+            .padding(.trailing, 8)
         }
         .sheet(isPresented: $showHistory) {
             HistoryView(store: engine.history)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
         .safeAreaInset(edge: .bottom) { startButton }
     }
@@ -100,7 +118,9 @@ struct SetupView: View {
     }
 
     private var estimateSection: some View {
-        Text("≈ \(formatDuration(WorkoutEngine.estimatedDuration(for: engine.config))) total")
+        let duration = formatDuration(WorkoutEngine.estimatedDuration(for: engine.config))
+        let text = String(format: L("≈ %@ total", locale), duration)
+        return Text(verbatim: text)
             .font(.system(size: 15, weight: .medium, design: .rounded))
             .foregroundStyle(.secondary)
     }
@@ -132,8 +152,9 @@ struct SetupView: View {
 // MARK: - Components
 
 private struct DigitStepper: View {
-    let label: String
+    let label: LocalizedStringKey
     @Binding var digit: Int
+    @Environment(\.locale) private var locale
 
     var body: some View {
         VStack(spacing: 10) {
@@ -146,7 +167,7 @@ private struct DigitStepper: View {
             }
             .foregroundStyle(Color.accentColor)
 
-            Text("\(digit)")
+            Text(verbatim: digit.formatted(.number.locale(locale)))
                 .font(.system(size: 40, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .frame(width: 56, height: 60)
@@ -169,11 +190,12 @@ private struct DigitStepper: View {
 }
 
 private struct CounterRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Int
     let range: ClosedRange<Int>
     var step: Int = 1
     var unit: String = ""
+    @Environment(\.locale) private var locale
 
     var body: some View {
         HStack(spacing: 12) {
@@ -190,7 +212,7 @@ private struct CounterRow: View {
             }
             .foregroundStyle(.white)
 
-            Text("\(value)\(unit)")
+            Text(verbatim: "\(value.formatted(.number.locale(locale)))\(unit)")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .frame(minWidth: 64)

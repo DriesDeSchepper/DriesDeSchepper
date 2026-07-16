@@ -12,6 +12,7 @@ struct TempoRepApp: App {
 
 struct RootView: View {
     @State private var engine = WorkoutEngine()
+    private let localization = LocalizationManager.shared
 
     var body: some View {
         ZStack {
@@ -23,6 +24,7 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .environment(\.locale, localization.locale)
         .animation(.easeInOut(duration: 0.25), value: engine.state == .idle)
     }
 }

@@ -67,36 +67,41 @@ enum Phase: Equatable {
     case rest
     case done
 
-    var title: String {
+    /// Localized display strings. These aren't SwiftUI `Text`, so unlike
+    /// most of the app's UI text they can't rely on the `\.locale`
+    /// environment — the caller passes the locale explicitly (from
+    /// `@Environment(\.locale)` in a View, or `LocalizationManager` in the
+    /// engine, which also needs these for voice cues).
+    func title(_ locale: Locale) -> String {
         switch self {
-        case .getReady: return "GET READY"
-        case .eccentric: return "ECCENTRIC"
-        case .pauseBottom, .pauseTop: return "PAUSE"
-        case .concentric: return "CONCENTRIC"
-        case .rest: return "REST"
-        case .done: return "DONE"
+        case .getReady: return L("phase.getReady.title", locale)
+        case .eccentric: return L("phase.eccentric.title", locale)
+        case .pauseBottom, .pauseTop: return L("phase.pause.title", locale)
+        case .concentric: return L("phase.concentric.title", locale)
+        case .rest: return L("phase.rest.title", locale)
+        case .done: return L("phase.done.title", locale)
         }
     }
 
-    var subtitle: String {
+    func subtitle(_ locale: Locale) -> String {
         switch self {
-        case .getReady: return "starting"
-        case .eccentric: return "lower"
-        case .pauseBottom, .pauseTop: return "hold"
-        case .concentric: return "lift"
-        case .rest: return "breathe"
-        case .done: return "nice work"
+        case .getReady: return L("phase.getReady.subtitle", locale)
+        case .eccentric: return L("phase.eccentric.subtitle", locale)
+        case .pauseBottom, .pauseTop: return L("phase.pause.subtitle", locale)
+        case .concentric: return L("phase.concentric.subtitle", locale)
+        case .rest: return L("phase.rest.subtitle", locale)
+        case .done: return L("phase.done.subtitle", locale)
         }
     }
 
-    var voiceWord: String {
+    func voiceWord(_ locale: Locale) -> String {
         switch self {
-        case .getReady: return "Get ready"
-        case .eccentric: return "Down"
-        case .pauseBottom, .pauseTop: return "Hold"
-        case .concentric: return "Up"
-        case .rest: return "Rest"
-        case .done: return "Workout complete"
+        case .getReady: return L("phase.getReady.voice", locale)
+        case .eccentric: return L("phase.eccentric.voice", locale)
+        case .pauseBottom, .pauseTop: return L("phase.pause.voice", locale)
+        case .concentric: return L("phase.concentric.voice", locale)
+        case .rest: return L("phase.rest.voice", locale)
+        case .done: return L("phase.done.voice", locale)
         }
     }
 }

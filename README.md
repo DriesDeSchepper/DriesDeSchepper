@@ -17,7 +17,8 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Reps per set, number of sets, rest between sets
 - Huge phase name + countdown ring, readable from across the room
 - Distinct sound + haptic cues for phase changes, rep completion, and set completion
-- Optional voice countdown: spoken "Down / Hold / Up", rep numbers, "Rest", and a 3-2-1 lead-in before each set
+- Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
+- Optional voice countdown: spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Automatic rest countdown between sets
 - Pause/resume and stop
@@ -58,7 +59,10 @@ TempoRep/
   Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
   Services/HapticsPlayer.swift  UIKit feedback generators
   Services/HistoryStore.swift  Persisted log of completed workouts
+  Services/LocalizationManager.swift  System-language / override language resolution
   Views/SetupView.swift       Tempo/reps/sets/rest configuration
   Views/WorkoutView.swift     In-workout display and controls
   Views/HistoryView.swift     Workout history sheet
+  Views/SettingsView.swift    Language override
+  Localizable.xcstrings       String catalog (en, nl, fr, de)
 ```

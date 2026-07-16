@@ -3,6 +3,7 @@ import SwiftUI
 struct HistoryView: View {
     let store: HistoryStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     var body: some View {
         NavigationStack {
@@ -70,7 +71,8 @@ struct HistoryView: View {
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                 }
-                Text(record.date.formatted(date: .abbreviated, time: .shortened))
+                Text(verbatim: record.date.formatted(
+                    Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale)))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

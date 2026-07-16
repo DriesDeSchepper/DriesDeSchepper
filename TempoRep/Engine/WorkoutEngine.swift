@@ -35,6 +35,7 @@ final class WorkoutEngine {
     @ObservationIgnored private var pauseBegan: Date?
     @ObservationIgnored private var segmentIndex = -1
     @ObservationIgnored private var lastSpokenCountdown = -1
+    @ObservationIgnored private var lastSpokenSecondInSegment = -1
     @ObservationIgnored private var ticker: Timer?
 
     private let sound = SoundPlayer()
@@ -152,6 +153,7 @@ final class WorkoutEngine {
             playCues(enteringIndex: index)
             segmentIndex = index
             lastSpokenCountdown = -1
+            lastSpokenSecondInSegment = -1
         }
 
         let segment = timeline[index]
@@ -161,12 +163,26 @@ final class WorkoutEngine {
         phaseRemaining = segment.end - elapsed
         phaseProgress = min(1, max(0, (elapsed - segment.start) / segment.duration))
 
+        guard config.voiceCues else { return }
+        let languageCode = LocalizationManager.shared.language.speechLanguageCode
+
         // Spoken 3-2-1 lead-in during get-ready and at the end of each rest.
-        if config.voiceCues, segment.phase == .rest || segment.phase == .getReady {
+        if segment.phase == .rest || segment.phase == .getReady {
             let secondsLeft = Int(phaseRemaining.rounded(.up))
             if secondsLeft <= 3, secondsLeft >= 1, secondsLeft != lastSpokenCountdown {
-                speech.speak("\(secondsLeft)")
+                speech.speak("\(secondsLeft)", languageCode: languageCode)
                 lastSpokenCountdown = secondsLeft
+            }
+        } else if segment.rep > 0, segment.duration > 1 {
+            // In-rep phases (eccentric/hold/concentric) longer than a second
+            // are counted up as they happen: the phase word covers second 1
+            // (spoken once on entry in playCues), then "2", "3", ... follow
+            // once per elapsed second — e.g. a 4s eccentric speaks
+            // "Down, 2, 3, 4".
+            let secondInSegment = Int(elapsed - segment.start) + 1
+            if secondInSegment >= 2, secondInSegment <= Int(segment.duration), secondInSegment != lastSpokenSecondInSegment {
+                speech.speak("\(secondInSegment)", languageCode: languageCode)
+                lastSpokenSecondInSegment = secondInSegment
             }
         }
     }
@@ -183,7 +199,8 @@ final class WorkoutEngine {
         sound.play(.workoutComplete)
         haptics.setComplete()
         if config.voiceCues {
-            speech.speak(Phase.done.voiceWord)
+            let locale = LocalizationManager.shared.locale
+            speech.speak(Phase.done.voiceWord(locale), languageCode: LocalizationManager.shared.language.speechLanguageCode)
         }
         history.add(WorkoutRecord(
             id: UUID(),
@@ -203,6 +220,8 @@ final class WorkoutEngine {
         // With voice on, speech replaces the phase/rep beeps (haptics and the
         // set/finish chimes stay); with voice off, behavior is unchanged.
         let voice = config.voiceCues
+        let locale = LocalizationManager.shared.locale
+        let languageCode = LocalizationManager.shared.language.speechLanguageCode
 
         guard index > 0 else {
             haptics.phaseChange()
@@ -220,30 +239,33 @@ final class WorkoutEngine {
             sound.play(.setComplete)
             haptics.setComplete()
             if voice {
-                speech.speak(Phase.rest.voiceWord)
+                speech.speak(Phase.rest.voiceWord(locale), languageCode: languageCode)
             }
         } else if old.phase == .rest || old.phase == .getReady {
             // A new set (or the workout) is starting.
             haptics.phaseChange()
             if voice {
-                speech.speak(new.phase.voiceWord)
+                speech.speak(new.phase.voiceWord(locale), languageCode: languageCode)
             } else {
                 sound.play(.phaseChange)
-            }
-        } else if old.rep != new.rep {
-            // Crossed a rep boundary within a set: speak the new rep number.
-            haptics.repComplete()
-            if voice {
-                speech.speak("\(new.rep)")
-            } else {
-                sound.play(.repComplete)
             }
         } else {
-            haptics.phaseChange()
-            if voice {
-                speech.speak(new.phase.voiceWord)
+            // Any other phase change, including rep boundaries (a new rep
+            // always starts with the eccentric phase). Haptics distinguish a
+            // rep boundary from a within-rep phase change, but the voice cue
+            // is always the phase word, so the "Down, 2, 3, 4" style count
+            // (see tick()) stays unambiguous on every rep — a spoken rep
+            // number here would collide with that per-second count.
+            let crossedRep = old.rep != new.rep
+            if crossedRep {
+                haptics.repComplete()
             } else {
-                sound.play(.phaseChange)
+                haptics.phaseChange()
+            }
+            if voice {
+                speech.speak(new.phase.voiceWord(locale), languageCode: languageCode)
+            } else {
+                sound.play(crossedRep ? .repComplete : .phaseChange)
             }
         }
     }
