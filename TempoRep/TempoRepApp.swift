@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct TempoApp: App {
+struct TempoRepApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()

@@ -1,4 +1,4 @@
-# Tempo
+# TempoRep
 
 A minimal, high-contrast tempo training timer for strength workouts, built with SwiftUI (iOS 17+).
 
@@ -32,14 +32,14 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 
 ## Running in the simulator
 
-1. Open `Tempo.xcodeproj` in Xcode
-2. Select the **Tempo** scheme and any iPhone simulator
+1. Open `TempoRep.xcodeproj` in Xcode
+2. Select the **TempoRep** scheme and any iPhone simulator
 3. Press **⌘R**
 
 Or from the command line:
 
 ```sh
-xcodebuild build -project Tempo.xcodeproj -scheme Tempo \
+xcodebuild build -project TempoRep.xcodeproj -scheme TempoRep \
   -destination 'platform=iOS Simulator,name=iPhone 16' CODE_SIGNING_ALLOWED=NO
 ```
 
@@ -48,11 +48,12 @@ Note: haptics don't fire in the simulator — run on a device to feel them. To r
 ## Project layout
 
 ```
-Tempo/
-  TempoApp.swift              App entry point
+TempoRep/
+  TempoRepApp.swift              App entry point
   Models/WorkoutModels.swift  Config, phases, timeline segments
   Engine/WorkoutEngine.swift  Elapsed-time-driven workout state machine
   Services/SoundPlayer.swift  Synthesized beep cues via AVFoundation
+  Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
   Services/HapticsPlayer.swift  UIKit feedback generators
   Views/SetupView.swift       Tempo/reps/sets/rest configuration
   Views/WorkoutView.swift     In-workout display and controls

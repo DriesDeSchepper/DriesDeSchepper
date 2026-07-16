@@ -10,7 +10,7 @@ struct SetupView: View {
             ScrollView {
                 VStack(spacing: 32) {
                     VStack(spacing: 4) {
-                        Text("TEMPO")
+                        Text("TEMPOREP")
                             .font(.system(size: 40, weight: .heavy, design: .rounded))
                             .tracking(8)
                         Text("tempo training timer")

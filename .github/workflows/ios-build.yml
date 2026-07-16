@@ -17,7 +17,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild build \
-            -project Tempo.xcodeproj \
-            -scheme Tempo \
+            -project TempoRep.xcodeproj \
+            -scheme TempoRep \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
