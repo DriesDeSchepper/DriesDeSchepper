@@ -22,7 +22,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
 - Bundled exercise database (873 exercises from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db), no network calls): searchable picker with muscle/equipment filters and a recents list; picking an exercise suggests unilateral mode and starting phase (deadlifts/pull-ups lead with the concentric phase) — or skip it and run a bare timer
-- 4 built-in presets (Squat, Push-Up, Single-Leg RDL, Deadlift) that set exercise + tempo + reps + sets + rest + unilateral settings all at once
+- 4 built-in presets (Squat, Push-Up, Single-Leg RDL, Deadlift) that set exercise + tempo + reps + sets + rest + unilateral settings all at once, plus save your own under "My Presets" (long-press to delete)
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
@@ -58,7 +58,7 @@ TempoRep/
   TempoRepApp.swift              App entry point
   Models/WorkoutModels.swift  Config, phases, timeline segments
   Models/Exercise.swift       Bundled exercise-database entry
-  Models/WorkoutPreset.swift  Built-in exercise+settings presets
+  Models/WorkoutPreset.swift  Built-in and user-saved exercise+settings presets
   Engine/WorkoutEngine.swift  Elapsed-time-driven workout state machine
   Services/SoundPlayer.swift  Synthesized beep cues via AVFoundation
   Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
@@ -66,6 +66,7 @@ TempoRep/
   Services/HistoryStore.swift  Persisted log of completed workouts
   Services/LocalizationManager.swift  System-language / override language resolution
   Services/ExerciseDatabase.swift  Loads the bundled dataset, tracks recents
+  Services/PresetStore.swift  Persisted log of user-saved presets
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
   Views/WorkoutView.swift     In-workout display and controls
   Views/HistoryView.swift     Workout history sheet

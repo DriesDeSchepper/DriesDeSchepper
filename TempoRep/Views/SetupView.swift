@@ -6,6 +6,8 @@ struct SetupView: View {
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var showExercisePicker = false
+    @State private var showSavePresetAlert = false
+    @State private var newPresetName = ""
     private let exerciseDatabase = ExerciseDatabase.shared
 
     var body: some View {
@@ -27,6 +29,7 @@ struct SetupView: View {
                     exerciseSection
                     tempoSection
                     presetSection
+                    customPresetsSection
                     countersSection
                     unilateralSection
                     estimateSection
@@ -132,27 +135,66 @@ struct SetupView: View {
     }
 
     private var presetSection: some View {
-        HStack(spacing: 10) {
-            ForEach(WorkoutPreset.builtIn) { preset in
-                Button {
-                    preset.apply(to: &engine.config)
-                    if let exercise = exerciseDatabase.exercise(id: preset.exerciseID) {
-                        exerciseDatabase.markUsed(exercise)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(WorkoutPreset.builtIn) { preset in
+                    PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
+                        apply(preset)
                     }
-                } label: {
-                    VStack(spacing: 2) {
-                        Text(verbatim: preset.displayName)
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                        Text(verbatim: preset.tempoDigits.map(String.init).joined())
-                            .font(.system(size: 11, weight: .medium, design: .rounded).monospacedDigit())
-                            .opacity(0.7)
-                    }
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity)
                 }
-                .background(Color.white.opacity(0.1), in: Capsule())
-                .foregroundStyle(.white)
             }
+        }
+    }
+
+    private var customPresetsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("My Presets")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(engine.presets.custom) { preset in
+                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
+                            apply(preset)
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                engine.presets.delete(preset)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+
+                    Button {
+                        newPresetName = ""
+                        showSavePresetAlert = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(width: 44, height: 44)
+                    }
+                    .background(Color.white.opacity(0.1), in: Circle())
+                    .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+        .alert("Save Preset", isPresented: $showSavePresetAlert) {
+            TextField("Preset name", text: $newPresetName)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                let trimmed = newPresetName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                engine.presets.save(name: trimmed, from: engine.config)
+            }
+        }
+    }
+
+    private func apply(_ preset: WorkoutPreset) {
+        preset.apply(to: &engine.config)
+        if let exercise = exerciseDatabase.exercise(id: preset.exerciseID) {
+            exerciseDatabase.markUsed(exercise)
         }
     }
 
@@ -242,6 +284,29 @@ struct SetupView: View {
 }
 
 // MARK: - Components
+
+private struct PresetChip: View {
+    let displayName: String
+    let tempoDigits: [Int]
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 2) {
+                Text(verbatim: displayName)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                Text(verbatim: tempoDigits.map(String.init).joined())
+                    .font(.system(size: 11, weight: .medium, design: .rounded).monospacedDigit())
+                    .opacity(0.7)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+        }
+        .background(Color.white.opacity(0.1), in: Capsule())
+        .foregroundStyle(.white)
+    }
+}
 
 private struct DigitStepper: View {
     let label: LocalizedStringKey

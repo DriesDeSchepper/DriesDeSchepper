@@ -21,6 +21,7 @@ final class WorkoutEngine {
     }
 
     let history = HistoryStore()
+    let presets = PresetStore()
 
     private(set) var state: State = .idle
     private(set) var currentPhase: Phase = .getReady
