@@ -28,7 +28,7 @@ jobs:
           xcodebuild test \
             -project TempoRep.xcodeproj \
             -scheme TempoRep \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
             CODE_SIGNING_ALLOWED=NO
 
       - name: List available simulators (only if tests failed to find a destination)
