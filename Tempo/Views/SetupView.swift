@@ -70,6 +70,15 @@ struct SetupView: View {
             CounterRow(title: "Reps per set", value: $engine.config.repsPerSet, range: 1...30)
             CounterRow(title: "Sets", value: $engine.config.sets, range: 1...10)
             CounterRow(title: "Rest between sets", value: $engine.config.restSeconds, range: 15...300, step: 15, unit: " s")
+            HStack {
+                Text("Voice countdown")
+                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                Spacer()
+                Toggle("Voice countdown", isOn: $engine.config.voiceCues)
+                    .labelsHidden()
+                    .tint(Color.accentColor)
+            }
+            .padding(.vertical, 4)
         }
         .padding(20)
         .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))

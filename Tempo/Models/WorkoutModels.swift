@@ -7,6 +7,7 @@ struct WorkoutConfig: Equatable {
     var repsPerSet: Int = 8
     var sets: Int = 3
     var restSeconds: Int = 90
+    var voiceCues: Bool = true
 
     /// A concentric digit of 0 means "explosive" — timed as 1 second.
     var concentricSeconds: Int { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
@@ -49,6 +50,17 @@ enum Phase: Equatable {
         case .concentric: return "lift"
         case .rest: return "breathe"
         case .done: return "nice work"
+        }
+    }
+
+    var voiceWord: String {
+        switch self {
+        case .getReady: return "Get ready"
+        case .eccentric: return "Down"
+        case .pauseBottom, .pauseTop: return "Hold"
+        case .concentric: return "Up"
+        case .rest: return "Rest"
+        case .done: return "Workout complete"
         }
     }
 }

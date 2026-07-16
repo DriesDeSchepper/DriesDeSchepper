@@ -30,10 +30,12 @@ final class WorkoutEngine {
     @ObservationIgnored private var pausedAccumulated: TimeInterval = 0
     @ObservationIgnored private var pauseBegan: Date?
     @ObservationIgnored private var segmentIndex = -1
+    @ObservationIgnored private var lastSpokenCountdown = -1
     @ObservationIgnored private var ticker: Timer?
 
     private let sound = SoundPlayer()
     private let haptics = HapticsPlayer()
+    private let speech = SpeechPlayer()
 
     // MARK: - Controls
 
@@ -48,6 +50,7 @@ final class WorkoutEngine {
         currentSet = 1
         state = .running
         sound.activateSession()
+        sound.startKeepAlive()
         haptics.prepare()
         UIApplication.shared.isIdleTimerDisabled = true
         startTicker()
@@ -75,6 +78,8 @@ final class WorkoutEngine {
     func stop() {
         stopTicker()
         UIApplication.shared.isIdleTimerDisabled = false
+        speech.stop()
+        sound.stopKeepAlive()
         sound.deactivateSession()
         state = .idle
     }
@@ -142,6 +147,7 @@ final class WorkoutEngine {
         if index != segmentIndex {
             playCues(enteringIndex: index)
             segmentIndex = index
+            lastSpokenCountdown = -1
         }
 
         let segment = timeline[index]
@@ -150,6 +156,15 @@ final class WorkoutEngine {
         currentSet = segment.set
         phaseRemaining = segment.end - elapsed
         phaseProgress = min(1, max(0, (elapsed - segment.start) / segment.duration))
+
+        // Spoken 3-2-1 lead-in during get-ready and at the end of each rest.
+        if config.voiceCues, segment.phase == .rest || segment.phase == .getReady {
+            let secondsLeft = Int(phaseRemaining.rounded(.up))
+            if secondsLeft <= 3, secondsLeft >= 1, secondsLeft != lastSpokenCountdown {
+                speech.speak("\(secondsLeft)")
+                lastSpokenCountdown = secondsLeft
+            }
+        }
     }
 
     private func finish() {
@@ -160,16 +175,27 @@ final class WorkoutEngine {
         phaseRemaining = 0
         phaseProgress = 1
         UIApplication.shared.isIdleTimerDisabled = false
+        sound.stopKeepAlive()
         sound.play(.workoutComplete)
         haptics.setComplete()
+        if config.voiceCues {
+            speech.speak(Phase.done.voiceWord)
+        }
     }
 
     // MARK: - Cues
 
     private func playCues(enteringIndex index: Int) {
+        // With voice on, speech replaces the phase/rep beeps (haptics and the
+        // set/finish chimes stay); with voice off, behavior is unchanged.
+        let voice = config.voiceCues
+
         guard index > 0 else {
-            sound.play(.phaseChange)
             haptics.phaseChange()
+            if !voice {
+                sound.play(.phaseChange)
+            }
+            // With voice on, the spoken 3-2-1 covers the get-ready lead-in.
             return
         }
         let old = timeline[index - 1]
@@ -179,17 +205,32 @@ final class WorkoutEngine {
             // Last rep of the set just finished.
             sound.play(.setComplete)
             haptics.setComplete()
+            if voice {
+                speech.speak(Phase.rest.voiceWord)
+            }
         } else if old.phase == .rest || old.phase == .getReady {
             // A new set (or the workout) is starting.
-            sound.play(.phaseChange)
             haptics.phaseChange()
+            if voice {
+                speech.speak(new.phase.voiceWord)
+            } else {
+                sound.play(.phaseChange)
+            }
         } else if old.rep != new.rep {
-            // Crossed a rep boundary within a set.
-            sound.play(.repComplete)
+            // Crossed a rep boundary within a set: speak the new rep number.
             haptics.repComplete()
+            if voice {
+                speech.speak("\(new.rep)")
+            } else {
+                sound.play(.repComplete)
+            }
         } else {
-            sound.play(.phaseChange)
             haptics.phaseChange()
+            if voice {
+                speech.speak(new.phase.voiceWord)
+            } else {
+                sound.play(.phaseChange)
+            }
         }
     }
 }

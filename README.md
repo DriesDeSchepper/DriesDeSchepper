@@ -17,6 +17,8 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Reps per set, number of sets, rest between sets
 - Huge phase name + countdown ring, readable from across the room
 - Distinct sound + haptic cues for phase changes, rep completion, and set completion
+- Optional voice countdown: spoken "Down / Hold / Up", rep numbers, "Rest", and a 3-2-1 lead-in before each set
+- Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Screen stays awake during a workout

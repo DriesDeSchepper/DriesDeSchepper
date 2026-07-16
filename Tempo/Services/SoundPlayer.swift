@@ -16,6 +16,12 @@ final class SoundPlayer {
 
     private var players: [Cue: AVAudioPlayer] = [:]
 
+    /// Looping silent track. While it plays, the audio session counts as
+    /// actively playing, so with the `audio` background mode iOS keeps the
+    /// app running (and cues audible) when it's backgrounded or the screen
+    /// is locked mid-workout.
+    private var keepAlivePlayer: AVAudioPlayer?
+
     init() {
         // (frequency in Hz, duration in seconds); frequency 0 = silence.
         players[.phaseChange] = Self.makePlayer(tones: [(880, 0.09)])
@@ -23,6 +29,19 @@ final class SoundPlayer {
         players[.setComplete] = Self.makePlayer(tones: [(880, 0.10), (0, 0.06), (1109, 0.10), (0, 0.06), (1319, 0.20)])
         players[.workoutComplete] = Self.makePlayer(tones: [(1319, 0.12), (0, 0.05), (1319, 0.12), (0, 0.05), (1760, 0.35)])
         players.values.forEach { $0.prepareToPlay() }
+
+        keepAlivePlayer = Self.makePlayer(tones: [(0, 1.0)])
+        keepAlivePlayer?.numberOfLoops = -1
+        keepAlivePlayer?.volume = 0
+        keepAlivePlayer?.prepareToPlay()
+    }
+
+    func startKeepAlive() {
+        keepAlivePlayer?.play()
+    }
+
+    func stopKeepAlive() {
+        keepAlivePlayer?.stop()
     }
 
     func activateSession() {
