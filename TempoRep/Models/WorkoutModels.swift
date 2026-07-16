@@ -8,6 +8,10 @@ struct WorkoutConfig: Equatable, Codable {
     var sets: Int = 3
     var restSeconds: Int = 90
     var voiceCues: Bool = true
+    var unilateral: Bool = false
+    /// Pause between sides, in seconds. 0 = immediate, no dedicated pause.
+    var switchSeconds: Int = 10
+    var startingSide: Side = .left
 
     /// A concentric digit of 0 means "explosive" — timed as 1 second.
     var concentricSeconds: Int { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
@@ -43,6 +47,19 @@ struct WorkoutConfig: Equatable, Codable {
     }
 }
 
+enum Side: String, Codable, CaseIterable, Identifiable {
+    case left, right
+    var id: String { rawValue }
+    var opposite: Side { self == .left ? .right : .left }
+
+    func label(_ locale: Locale) -> String {
+        switch self {
+        case .left: return L("Left", locale)
+        case .right: return L("Right", locale)
+        }
+    }
+}
+
 /// One completed workout, as shown on the history screen.
 struct WorkoutRecord: Identifiable, Codable {
     let id: UUID
@@ -65,6 +82,7 @@ enum Phase: Equatable {
     case concentric
     case pauseTop
     case rest
+    case switchSides
     case done
 
     /// Localized display strings. These aren't SwiftUI `Text`, so unlike
@@ -79,6 +97,7 @@ enum Phase: Equatable {
         case .pauseBottom, .pauseTop: return L("phase.pause.title", locale)
         case .concentric: return L("phase.concentric.title", locale)
         case .rest: return L("phase.rest.title", locale)
+        case .switchSides: return L("phase.switchSides.title", locale)
         case .done: return L("phase.done.title", locale)
         }
     }
@@ -90,6 +109,7 @@ enum Phase: Equatable {
         case .pauseBottom, .pauseTop: return L("phase.pause.subtitle", locale)
         case .concentric: return L("phase.concentric.subtitle", locale)
         case .rest: return L("phase.rest.subtitle", locale)
+        case .switchSides: return L("phase.switchSides.subtitle", locale)
         case .done: return L("phase.done.subtitle", locale)
         }
     }
@@ -101,6 +121,7 @@ enum Phase: Equatable {
         case .pauseBottom, .pauseTop: return L("phase.pause.voice", locale)
         case .concentric: return L("phase.concentric.voice", locale)
         case .rest: return L("phase.rest.voice", locale)
+        case .switchSides: return L("phase.switchSides.voice", locale)
         case .done: return L("phase.done.voice", locale)
         }
     }
@@ -109,8 +130,12 @@ enum Phase: Equatable {
 /// One slice of the precomputed workout timeline.
 struct Segment {
     let phase: Phase
-    let rep: Int    // 1-based; 0 for non-rep segments (get ready / rest)
+    let rep: Int    // 1-based; 0 for non-rep segments (get ready / rest / switch)
     let set: Int    // 1-based
+    /// The side a rep segment belongs to (nil for bilateral work). A
+    /// `.switchSides` segment carries the *upcoming* side, so the UI can
+    /// show "up next: Right" during the pause.
+    let side: Side?
     let start: TimeInterval
     let duration: TimeInterval
     var end: TimeInterval { start + duration }

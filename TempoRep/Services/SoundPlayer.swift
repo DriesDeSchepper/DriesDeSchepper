@@ -11,6 +11,7 @@ final class SoundPlayer {
         case phaseChange
         case repComplete
         case setComplete
+        case sideSwitch
         case workoutComplete
     }
 
@@ -27,6 +28,8 @@ final class SoundPlayer {
         players[.phaseChange] = Self.makePlayer(tones: [(880, 0.09)])
         players[.repComplete] = Self.makePlayer(tones: [(1175, 0.09), (0, 0.05), (1175, 0.09)])
         players[.setComplete] = Self.makePlayer(tones: [(880, 0.10), (0, 0.06), (1109, 0.10), (0, 0.06), (1319, 0.20)])
+        // Alternating high/low "ping-pong" pair, distinct from the other cues.
+        players[.sideSwitch] = Self.makePlayer(tones: [(1400, 0.09), (0, 0.05), (700, 0.09), (0, 0.05), (1400, 0.09)])
         players[.workoutComplete] = Self.makePlayer(tones: [(1319, 0.12), (0, 0.05), (1319, 0.12), (0, 0.05), (1760, 0.35)])
         players.values.forEach { $0.prepareToPlay() }
 

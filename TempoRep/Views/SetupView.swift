@@ -25,6 +25,7 @@ struct SetupView: View {
                     tempoSection
                     presetSection
                     countersSection
+                    unilateralSection
                     estimateSection
                 }
                 .padding(.horizontal, 24)
@@ -115,6 +116,40 @@ struct SetupView: View {
         }
         .padding(20)
         .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var unilateralSection: some View {
+        VStack(spacing: 16) {
+            Picker(selection: $engine.config.unilateral) {
+                Text("Bilateral").tag(false)
+                Text("Unilateral").tag(true)
+            } label: {
+                EmptyView()
+            }
+            .pickerStyle(.segmented)
+
+            if engine.config.unilateral {
+                CounterRow(title: "Switch time", value: $engine.config.switchSeconds, range: 0...60, step: 5, unit: " s")
+
+                HStack {
+                    Text("Starting side")
+                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                    Spacer()
+                    Picker(selection: $engine.config.startingSide) {
+                        ForEach(Side.allCases) { side in
+                            Text(verbatim: side.label(locale)).tag(side)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 160)
+                }
+            }
+        }
+        .padding(20)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+        .animation(.easeInOut(duration: 0.2), value: engine.config.unilateral)
     }
 
     private var estimateSection: some View {

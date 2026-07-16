@@ -25,6 +25,14 @@ struct WorkoutView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, 24)
 
+            if engine.config.unilateral, let side = engine.currentSide {
+                Text(verbatim: side.label(locale).uppercased(with: locale))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .tracking(2)
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.top, 6)
+            }
+
             Spacer()
 
             Text(verbatim: engine.currentPhase.title(locale))
@@ -150,6 +158,8 @@ struct WorkoutView: View {
             return String(format: L("SET %d OF %d", locale), engine.currentSet, engine.config.sets)
         case .rest:
             return String(format: L("SET %d OF %d DONE", locale), engine.currentSet, engine.config.sets)
+        case .switchSides:
+            return String(format: L("SET %d OF %d", locale), engine.currentSet, engine.config.sets)
         case .done:
             return ""
         default:
@@ -162,12 +172,15 @@ struct WorkoutView: View {
         if engine.currentPhase == .rest {
             return String(format: L("up next: set %d", locale), engine.currentSet + 1)
         }
+        if engine.currentPhase == .switchSides, let side = engine.currentSide {
+            return String(format: L("up next: %@", locale), side.label(locale))
+        }
         return engine.currentPhase.subtitle(locale)
     }
 
     private var countdownText: String {
         let remaining = engine.phaseRemaining
-        if engine.currentPhase == .rest && remaining >= 60 {
+        if (engine.currentPhase == .rest || engine.currentPhase == .switchSides) && remaining >= 60 {
             let seconds = Int(remaining.rounded(.up))
             return String(format: "%d:%02d", seconds / 60, seconds % 60)
         }

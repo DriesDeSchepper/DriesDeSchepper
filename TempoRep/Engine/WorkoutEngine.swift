@@ -26,6 +26,7 @@ final class WorkoutEngine {
     private(set) var currentPhase: Phase = .getReady
     private(set) var currentRep = 0
     private(set) var currentSet = 1
+    private(set) var currentSide: Side?
     private(set) var phaseRemaining: TimeInterval = 0
     private(set) var phaseProgress: Double = 0 // 0...1 within the current segment
 
@@ -95,23 +96,37 @@ final class WorkoutEngine {
         var segments: [Segment] = []
         var cursor: TimeInterval = 0
 
-        func add(_ phase: Phase, rep: Int, set: Int, seconds: TimeInterval) {
+        func add(_ phase: Phase, rep: Int, set: Int, side: Side?, seconds: TimeInterval) {
             guard seconds > 0 else { return } // zero-length phases are skipped entirely
-            segments.append(Segment(phase: phase, rep: rep, set: set, start: cursor, duration: seconds))
+            segments.append(Segment(phase: phase, rep: rep, set: set, side: side, start: cursor, duration: seconds))
             cursor += seconds
         }
 
-        add(.getReady, rep: 0, set: 1, seconds: 3)
+        add(.getReady, rep: 0, set: 1, side: nil, seconds: 3)
+
+        // Bilateral work has one (sideless) pass per set; unilateral work
+        // does the full rep count for the starting side, then (after an
+        // optional switch pause) the full rep count for the other side —
+        // both within the same set, before any between-sets rest.
+        let sides: [Side?] = config.unilateral ? [config.startingSide, config.startingSide.opposite] : [nil]
 
         for set in 1...config.sets {
-            for rep in 1...config.repsPerSet {
-                add(.eccentric, rep: rep, set: set, seconds: TimeInterval(config.tempoDigits[0]))
-                add(.pauseBottom, rep: rep, set: set, seconds: TimeInterval(config.tempoDigits[1]))
-                add(.concentric, rep: rep, set: set, seconds: TimeInterval(config.concentricSeconds))
-                add(.pauseTop, rep: rep, set: set, seconds: TimeInterval(config.tempoDigits[3]))
+            for (sideIndex, side) in sides.enumerated() {
+                for rep in 1...config.repsPerSet {
+                    add(.eccentric, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[0]))
+                    add(.pauseBottom, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[1]))
+                    add(.concentric, rep: rep, set: set, side: side, seconds: TimeInterval(config.concentricSeconds))
+                    add(.pauseTop, rep: rep, set: set, side: side, seconds: TimeInterval(config.tempoDigits[3]))
+                }
+                let isLastSide = sideIndex == sides.count - 1
+                if !isLastSide, let nextSide = side?.opposite {
+                    // The upcoming side is attached to the segment itself so
+                    // the UI can show "up next: Right" during the pause.
+                    add(.switchSides, rep: 0, set: set, side: nextSide, seconds: TimeInterval(config.switchSeconds))
+                }
             }
             if set < config.sets {
-                add(.rest, rep: 0, set: set, seconds: TimeInterval(config.restSeconds))
+                add(.rest, rep: 0, set: set, side: nil, seconds: TimeInterval(config.restSeconds))
             }
         }
         return segments
@@ -160,6 +175,7 @@ final class WorkoutEngine {
         currentPhase = segment.phase
         if segment.rep > 0 { currentRep = segment.rep }
         currentSet = segment.set
+        currentSide = segment.side
         phaseRemaining = segment.end - elapsed
         phaseProgress = min(1, max(0, (elapsed - segment.start) / segment.duration))
 
@@ -167,7 +183,11 @@ final class WorkoutEngine {
         let languageCode = LocalizationManager.shared.language.speechLanguageCode
 
         // Spoken 3-2-1 lead-in during get-ready and at the end of each rest.
-        if segment.phase == .rest || segment.phase == .getReady {
+        // A switch-side pause only gets the countdown when it's long enough
+        // (4s+) to be worth counting down — shorter ones just get the
+        // "Switch side" announcement spoken once, in playCues.
+        if segment.phase == .rest || segment.phase == .getReady
+            || (segment.phase == .switchSides && segment.duration >= 4) {
             let secondsLeft = Int(phaseRemaining.rounded(.up))
             if secondsLeft <= 3, secondsLeft >= 1, secondsLeft != lastSpokenCountdown {
                 speech.speak("\(secondsLeft)", languageCode: languageCode)
@@ -209,7 +229,10 @@ final class WorkoutEngine {
             sets: config.sets,
             repsPerSet: config.repsPerSet,
             restSeconds: config.restSeconds,
-            timeUnderTension: timeline.filter { $0.rep > 0 }.reduce(0) { $0 + $1.duration },
+            // Both sides' reps count, and — for a unilateral workout — the
+            // switch pause between them, since it's part of the set rather
+            // than rest between sets.
+            timeUnderTension: timeline.filter { $0.rep > 0 || $0.phase == .switchSides }.reduce(0) { $0 + $1.duration },
             totalDuration: timeline.last?.end ?? 0
         ))
     }
@@ -241,8 +264,17 @@ final class WorkoutEngine {
             if voice {
                 speech.speak(Phase.rest.voiceWord(locale), languageCode: languageCode)
             }
-        } else if old.phase == .rest || old.phase == .getReady {
-            // A new set (or the workout) is starting.
+        } else if new.phase == .switchSides {
+            // Finished all reps for one side; pausing (or moving straight on,
+            // if switch time is 0) before starting the other side.
+            haptics.setComplete()
+            if voice {
+                speech.speak(Phase.switchSides.voiceWord(locale), languageCode: languageCode)
+            } else {
+                sound.play(.sideSwitch)
+            }
+        } else if old.phase == .rest || old.phase == .getReady || old.phase == .switchSides {
+            // A new set, a new side, or the workout itself is starting.
             haptics.phaseChange()
             if voice {
                 speech.speak(new.phase.voiceWord(locale), languageCode: languageCode)

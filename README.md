@@ -20,6 +20,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
 - Optional voice countdown: spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
+- Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
