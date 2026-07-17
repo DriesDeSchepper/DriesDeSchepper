@@ -7,14 +7,22 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                // A plain `.background(Color.black)` on the conditional
+                // content below only covers whatever size that content
+                // reports — for the empty state (a compact VStack with no
+                // spacer) that's just a tight box around the icon and text,
+                // not the full screen, leaving a visible black rectangle
+                // against the surrounding system dark background. Painting
+                // black first, full-bleed, avoids that regardless of which
+                // branch is showing.
+                Color.black.ignoresSafeArea()
                 if store.records.isEmpty {
                     emptyState
                 } else {
                     recordList
                 }
             }
-            .background(Color.black)
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
