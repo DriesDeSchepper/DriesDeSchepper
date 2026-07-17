@@ -93,7 +93,7 @@ struct WorkoutView: View {
                     engine.pause()
                 }
             } label: {
-                Label(engine.state == .paused ? "Resume" : "Pause",
+                Label(engine.state == .paused ? "Resume" : "workout.pauseButton",
                       systemImage: engine.state == .paused ? "play.fill" : "pause.fill")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .frame(maxWidth: .infinity)
