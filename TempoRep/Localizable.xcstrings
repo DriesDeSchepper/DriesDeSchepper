@@ -1,6 +1,35 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Add to favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu Favoriten hinzufügen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to favorites"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter aux favoris"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aan favorieten toevoegen"
+          }
+        }
+      }
+    },
     "All equipment": {
       "extractionState": "manual",
       "localizations": {
@@ -403,6 +432,35 @@
           "stringUnit": {
             "state": "translated",
             "value": "Oefening"
+          }
+        }
+      }
+    },
+    "Favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoriten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoris"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorieten"
           }
         }
       }
@@ -867,6 +925,35 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recent"
+          }
+        }
+      }
+    },
+    "Remove from favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Favoriten entfernen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from favorites"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer des favoris"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uit favorieten verwijderen"
           }
         }
       }

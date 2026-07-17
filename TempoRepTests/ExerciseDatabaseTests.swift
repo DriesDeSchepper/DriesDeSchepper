@@ -63,4 +63,21 @@ struct ExerciseDatabaseTests {
         #expect(db.exercise(id: "90_90_Hamstring")?.category == "stretching")
         #expect(db.exercise(id: "90_90_Hamstring")?.suggestedTempo == nil)
     }
+
+    @Test func togglingFavoriteFlipsMembershipAndListing() {
+        let db = ExerciseDatabase.shared
+        guard let exercise = db.exercise(id: "Barbell_Squat") else {
+            Issue.record("missing preset exercise Barbell_Squat")
+            return
+        }
+        let wasFavorite = db.isFavorite(exercise)
+        defer { if db.isFavorite(exercise) != wasFavorite { db.toggleFavorite(exercise) } }
+
+        db.toggleFavorite(exercise)
+        #expect(db.isFavorite(exercise) == !wasFavorite)
+        #expect(db.favorites.contains { $0.id == exercise.id } == !wasFavorite)
+
+        db.toggleFavorite(exercise)
+        #expect(db.isFavorite(exercise) == wasFavorite)
+    }
 }

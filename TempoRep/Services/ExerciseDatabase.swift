@@ -10,17 +10,40 @@ final class ExerciseDatabase {
 
     let exercises: [Exercise]
     private(set) var recentIDs: [String] = []
+    private(set) var favoriteIDs: Set<String> = []
 
     private static let recentsKey = "recentExerciseIDs"
+    private static let favoritesKey = "favoriteExerciseIDs"
     private static let maxRecents = 8
 
     private init() {
         exercises = Self.load()
         recentIDs = UserDefaults.standard.stringArray(forKey: Self.recentsKey) ?? []
+        favoriteIDs = Set(UserDefaults.standard.stringArray(forKey: Self.favoritesKey) ?? [])
     }
 
     var recents: [Exercise] {
         recentIDs.compactMap { id in exercises.first { $0.id == id } }
+    }
+
+    /// `exercises` is already name-sorted, so filtering it (rather than
+    /// mapping `favoriteIDs`) keeps favorites in the same alphabetical order
+    /// as the rest of the picker instead of "most recently favorited".
+    var favorites: [Exercise] {
+        exercises.filter { favoriteIDs.contains($0.id) }
+    }
+
+    func isFavorite(_ exercise: Exercise) -> Bool {
+        favoriteIDs.contains(exercise.id)
+    }
+
+    func toggleFavorite(_ exercise: Exercise) {
+        if favoriteIDs.contains(exercise.id) {
+            favoriteIDs.remove(exercise.id)
+        } else {
+            favoriteIDs.insert(exercise.id)
+        }
+        UserDefaults.standard.set(Array(favoriteIDs), forKey: Self.favoritesKey)
     }
 
     var allMuscles: [String] {

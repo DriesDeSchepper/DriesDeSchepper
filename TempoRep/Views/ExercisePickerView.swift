@@ -26,6 +26,15 @@ struct ExercisePickerView: View {
                             }
                         }
                     }
+                    if !database.favorites.isEmpty {
+                        Section {
+                            ForEach(database.favorites) { exercise in
+                                row(exercise)
+                            }
+                        } header: {
+                            Text("Favorites")
+                        }
+                    }
                     if !database.recents.isEmpty {
                         Section {
                             ForEach(database.recents) { exercise in
@@ -87,17 +96,34 @@ struct ExercisePickerView: View {
     }
 
     private func row(_ exercise: Exercise) -> some View {
-        Button {
-            select(exercise)
-        } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: exercise.name)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(verbatim: captionText(exercise))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            Button {
+                select(exercise)
+            } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(verbatim: exercise.name)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(verbatim: captionText(exercise))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                database.toggleFavorite(exercise)
+            } label: {
+                Image(systemName: database.isFavorite(exercise) ? "star.fill" : "star")
+                    .font(.system(size: 17))
+                    .foregroundStyle(database.isFavorite(exercise) ? .yellow : .secondary)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(database.isFavorite(exercise) ? "Remove from favorites" : "Add to favorites"))
         }
     }
 
