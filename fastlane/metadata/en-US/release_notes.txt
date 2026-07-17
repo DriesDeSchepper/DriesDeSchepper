@@ -1,0 +1,1 @@
+Initial release: tempo timer, unilateral mode, exercise database, presets, and full English/Dutch/French/German localization.

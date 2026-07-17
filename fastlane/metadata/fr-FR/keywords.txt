@@ -1,0 +1,1 @@
+tempo,minuteur,entrainement,force,musculation,salle de sport,répétition,fitness,unilatéral

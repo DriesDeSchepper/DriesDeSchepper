@@ -1,0 +1,1 @@
+Un minuteur d'entraînement tempo avec annonces vocales, mode unilatéral et une base de données d'exercices intégrée. Tout sur l'appareil — sans compte, sans suivi.
