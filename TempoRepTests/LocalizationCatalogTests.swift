@@ -27,6 +27,7 @@ struct LocalizationCatalogTests {
             L("Cancel", locale),
             L("Save", locale),
             L("Delete", locale),
+            L("Close", locale),
             L("Voice", locale),
             L("Voice countdown", locale),
             L("Speech voice", locale),

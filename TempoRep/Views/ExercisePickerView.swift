@@ -58,6 +58,8 @@ struct ExercisePickerView: View {
             .searchable(text: $searchText, prompt: Text("Search exercises"))
             .navigationTitle("Exercise")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -70,13 +72,13 @@ struct ExercisePickerView: View {
                     .accessibilityLabel(Text("Filters"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
+                    CloseButton { dismiss() }
                 }
             }
             .sheet(isPresented: $showFilters) {
                 FilterSheet(muscles: database.allMuscles, equipment: database.allEquipment,
                             muscleFilter: $muscleFilter, equipmentFilter: $equipmentFilter)
+                    .presentationBackground(Color.black)
             }
         }
         .preferredColorScheme(.dark)
@@ -201,10 +203,11 @@ private struct FilterSheet: View {
             .background(Color.black)
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
+                    CloseButton { dismiss() }
                 }
             }
         }

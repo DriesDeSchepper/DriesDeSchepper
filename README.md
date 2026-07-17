@@ -30,6 +30,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Workout history: finished workouts are logged with exercise (if one was picked), tempo, sets × reps, and time under tension (shown as "15s" under a minute, "1:30" once it isn't, to avoid an ambiguous bare "0:15")
 - Finish screen shows a checkmark animation, correctly-pluralized sets/reps ("1 rep", not "1 reps"), and time under tension for that workout
 - Screen stays awake during a workout
+- Settings, History, and the exercise picker are opaque black sheets top to bottom (nav bar included, no translucent-over-content seam) with the system's standard round close button, not a text "Done"
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks
 - Cues play even when the phone is on silent (`.playback` audio session category)
 - No network access, no accounts, no tracking, no third-party SDKs — everything lives in local `UserDefaults` and the bundled exercise dataset (see `PrivacyInfo.xcprivacy` and `PRIVACY_POLICY.md`)
@@ -88,6 +89,7 @@ TempoRep/
   Views/HistoryView.swift     Workout history sheet
   Views/SettingsView.swift    Language override, voice countdown toggle, per-language speech voice picker
   Views/ExercisePickerView.swift  Searchable exercise picker
+  Views/CloseButton.swift     Shared round "xmark.circle.fill" sheet-dismiss button
   Resources/exercises.json    Bundled exercise dataset (name/category/muscles/equipment, no images)
   Localizable.xcstrings       String catalog (en, nl, fr, de)
   PrivacyInfo.xcprivacy       Privacy manifest — no tracking, no collected data

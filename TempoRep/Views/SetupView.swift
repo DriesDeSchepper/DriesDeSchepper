@@ -57,12 +57,15 @@ struct SetupView: View {
         }
         .sheet(isPresented: $showHistory) {
             HistoryView(store: engine.history)
+                .presentationBackground(Color.black)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(engine: engine)
+                .presentationBackground(Color.black)
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView(engine: engine)
+                .presentationBackground(Color.black)
         }
         .safeAreaInset(edge: .bottom) { startButton }
     }
