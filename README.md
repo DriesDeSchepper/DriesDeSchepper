@@ -30,6 +30,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Workout history: finished workouts are logged with exercise (if one was picked), tempo, sets × reps, and time under tension (shown as "15s" under a minute, "1:30" once it isn't, to avoid an ambiguous bare "0:15")
 - Finish screen shows a checkmark animation, correctly-pluralized sets/reps ("1 rep", not "1 reps"), and time under tension for that workout
 - Screen stays awake during a workout
+- The workout screen supports landscape (phone propped on a shelf, in a stand, etc.) with an adapted side-by-side layout; every other screen stays portrait-only — see `OrientationLock.swift`
 - Settings, History, and the exercise picker are plain native `Form`/`List` sheets (system materials, resizable via `.presentationDetents`) with the system's standard round close button, not a text "Done"; they follow the system light/dark appearance, while the workout screen and launch splash are deliberately always dark (see `WorkoutView`'s doc comment)
 - Every color, font, spacing, corner-radius, and animation value in the UI comes from one design-system file (`DesignSystem.swift`) — semantic tokens, a 4/8/12/16/24/32 spacing scale, and Dynamic Type text styles throughout (the oversized workout-display digits scale via `@ScaledMetric` instead, since they're bigger than any standard text style)
 - VoiceOver: tempo digit steppers and counters (reps/sets/rest/switch time) present as single adjustable elements with real labels, not unlabeled +/- buttons; the workout screen announces phase changes via `UIAccessibility.post` independent of the optional voice-cue feature; Reduce Motion replaces the finish-screen checkmark's pop-in with a plain crossfade
@@ -88,7 +89,8 @@ TempoRep/
   Services/PresetStore.swift  Persisted log of user-saved presets
   Views/SplashView.swift      Brief launch screen with the wordmark
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
-  Views/WorkoutView.swift     In-workout display and controls
+  Views/WorkoutView.swift     In-workout display and controls, with a landscape layout
+  Services/OrientationLock.swift  Runtime portrait lock, released only while WorkoutView is on screen
   Views/HistoryView.swift     Workout history sheet
   Views/SettingsView.swift    Language override, voice countdown toggle, per-language speech voice picker
   Views/ExercisePickerView.swift  Searchable exercise picker

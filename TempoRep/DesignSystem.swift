@@ -80,6 +80,11 @@ enum TempoMetrics {
     /// Extra top padding on the setup screen, clearing space for where the
     /// title/icons used to sit before the splash screen took over that job.
     static let setupTopInset: CGFloat = 60
+    /// The countdown ring's diameter in `WorkoutView`'s landscape layout —
+    /// smaller than portrait's 300pt since landscape's constraint is
+    /// height, not width. A fixed layout constant, not Dynamic-Type-scaled,
+    /// like `setupTopInset` above.
+    static let compactRingDiameter: CGFloat = 220
 }
 
 // MARK: - Typography
@@ -104,6 +109,11 @@ enum TempoFont {
 extension TempoMetrics {
     enum Display {
         static let countdown: CGFloat = 96
+        /// Countdown digit size to match `TempoMetrics.compactRingDiameter`
+        /// in landscape — reusing the portrait 96pt inside a 220pt ring
+        /// (vs. portrait's 300pt) would look undersized relative to the
+        /// smaller ring.
+        static let countdownCompact: CGFloat = 64
         static let phaseTitle: CGFloat = 54
         static let phaseSubtitle: CGFloat = 20
         static let digit: CGFloat = 40

@@ -7,14 +7,23 @@ import UIKit
 /// (if the workout screen simply inherited light mode) would be actively
 /// unpleasant and would blow out the display's contrast. See
 /// `.preferredColorScheme(.dark)` below.
+///
+/// This is also the only screen that allows landscape — the phone is
+/// often propped up on a shelf or in a stand mid-set. Every other screen
+/// stays portrait-only; see `OrientationLock`, which this view toggles on
+/// appear/disappear.
 struct WorkoutView: View {
     let engine: WorkoutEngine
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var completionAnimated = false
     @ScaledMetric(relativeTo: .largeTitle) private var countdownSize = TempoMetrics.Display.countdown
+    @ScaledMetric(relativeTo: .title) private var countdownSizeCompact = TempoMetrics.Display.countdownCompact
     @ScaledMetric(relativeTo: .largeTitle) private var phaseTitleSize = TempoMetrics.Display.phaseTitle
     @ScaledMetric(relativeTo: .title) private var finishedTitleSize = TempoMetrics.Display.finishedTitle
+
+    private var isCompactHeight: Bool { verticalSizeClass == .compact }
 
     var body: some View {
         ZStack {
@@ -26,6 +35,14 @@ struct WorkoutView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            OrientationLock.mask = .all
+            OrientationLock.apply()
+        }
+        .onDisappear {
+            OrientationLock.mask = .portrait
+            OrientationLock.apply()
+        }
         .onChange(of: engine.currentPhase) { _, newPhase in
             // VoiceOver users need phase changes even with the optional
             // spoken voice cues turned off — this is a separate,
@@ -43,6 +60,16 @@ struct WorkoutView: View {
     // MARK: - Active workout
 
     private var activeView: some View {
+        Group {
+            if isCompactHeight {
+                landscapeActiveView
+            } else {
+                portraitActiveView
+            }
+        }
+    }
+
+    private var portraitActiveView: some View {
         VStack(spacing: 0) {
             Text(verbatim: header)
                 .font(TempoFont.rounded(.title3, weight: .semibold))
@@ -72,17 +99,60 @@ struct WorkoutView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, Spacing.xs)
 
-            ring
+            ring(diameter: 300, digitSize: countdownSize)
                 .padding(.top, Spacing.xxl)
 
             Spacer()
 
             controls
+                .padding(.horizontal, Spacing.xl)
                 .padding(.bottom, Spacing.xl)
         }
     }
 
-    private var ring: some View {
+    /// Text on the left, ring on the right — landscape's constraint is
+    /// height, not width, so a vertical stack of everything (portrait's
+    /// layout) would overflow or force scrolling on shorter iPhones.
+    private var landscapeActiveView: some View {
+        HStack(spacing: Spacing.xxl) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                Text(verbatim: header)
+                    .font(TempoFont.rounded(.subheadline, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+
+                if engine.config.unilateral, let side = engine.currentSide {
+                    Text(verbatim: side.label(locale).uppercased(with: locale))
+                        .font(TempoFont.rounded(.footnote, weight: .bold))
+                        .tracking(2)
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                Spacer(minLength: Spacing.md)
+
+                Text(verbatim: engine.currentPhase.title(locale))
+                    .font(.system(size: phaseTitleSize, weight: .heavy, design: .rounded))
+                    .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.tempoOnDark))
+                    .minimumScaleFactor(0.4)
+                    .lineLimit(1)
+
+                Text(verbatim: subtitle)
+                    .font(TempoFont.rounded(.subheadline, weight: .medium))
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: Spacing.md)
+
+                controls
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ring(diameter: TempoMetrics.compactRingDiameter, digitSize: countdownSizeCompact)
+        }
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
+    }
+
+    private func ring(diameter: CGFloat, digitSize: CGFloat) -> some View {
         ZStack {
             Circle()
                 .stroke(Color.tempoOnDarkSurface, lineWidth: 14)
@@ -94,7 +164,7 @@ struct WorkoutView: View {
 
             VStack(spacing: Spacing.xs) {
                 Text(verbatim: countdownText)
-                    .font(.system(size: countdownSize, weight: .bold, design: .rounded))
+                    .font(.system(size: digitSize, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .minimumScaleFactor(0.4)
                     .lineLimit(1)
@@ -107,7 +177,7 @@ struct WorkoutView: View {
                 }
             }
         }
-        .frame(width: 300, height: 300)
+        .frame(width: diameter, height: diameter)
         .accessibilityElement(children: .ignore)
         // Reuses the existing "PAUSED" catalog key (already shown visually
         // above) rather than adding a new "Paused" one — the two would
@@ -147,28 +217,74 @@ struct WorkoutView: View {
             .background(Color.tempoOnDarkSurfaceRaised, in: Capsule())
             .foregroundStyle(Color.tempoOnDark)
         }
-        .padding(.horizontal, Spacing.xl)
     }
 
     // MARK: - Finished
 
     private var finishedView: some View {
+        Group {
+            if isCompactHeight {
+                landscapeFinishedView
+            } else {
+                portraitFinishedView
+            }
+        }
+        .onAppear {
+            withAnimation(TempoAnimation.celebration(reduceMotion: reduceMotion)) {
+                completionAnimated = true
+            }
+        }
+    }
+
+    private var checkmarkBadge: some View {
+        ZStack {
+            Circle()
+                .fill(Color.accentColor.opacity(0.15))
+                .frame(width: 130, height: 130)
+            Image(systemName: "checkmark")
+                .font(.system(size: 52, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+        }
+        // Reduce Motion: skip the scale entirely, keep only the fade — a
+        // crossfade instead of a "pop in" motion.
+        .scaleEffect(reduceMotion ? 1 : (completionAnimated ? 1 : 0.4))
+        .opacity(completionAnimated ? 1 : 0)
+        .accessibilityHidden(true)
+    }
+
+    private var timeUnderTensionBlock: some View {
+        VStack(spacing: Spacing.xs) {
+            Text(verbatim: Self.mmss(engine.lastTimeUnderTension))
+                .font(TempoFont.rounded(.title, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(Color.tempoOnDark)
+            Text("under tension")
+                .font(TempoFont.rounded(.caption, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var continueButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            engine.stop()
+        } label: {
+            Text("workout.continueButton")
+                .font(TempoFont.rounded(.title2, weight: .heavy))
+                .tracking(3)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Spacing.xl)
+        }
+        .background(Color.accentColor, in: Capsule())
+        .foregroundStyle(.black)
+    }
+
+    private var portraitFinishedView: some View {
         VStack(spacing: Spacing.lg) {
             Spacer()
 
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 130, height: 130)
-                Image(systemName: "checkmark")
-                    .font(.system(size: 52, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
-            }
-            // Reduce Motion: skip the scale entirely, keep only the fade —
-            // a crossfade instead of a "pop in" motion.
-            .scaleEffect(reduceMotion ? 1 : (completionAnimated ? 1 : 0.4))
-            .opacity(completionAnimated ? 1 : 0)
-            .accessibilityHidden(true)
+            checkmarkBadge
 
             Text(verbatim: Phase.done.title(locale))
                 .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
@@ -179,40 +295,42 @@ struct WorkoutView: View {
                 .font(TempoFont.rounded(.body, weight: .medium))
                 .foregroundStyle(.secondary)
 
-            VStack(spacing: Spacing.xs) {
-                Text(verbatim: Self.mmss(engine.lastTimeUnderTension))
-                    .font(TempoFont.rounded(.title, weight: .bold))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.tempoOnDark)
-                Text("under tension")
-                    .font(TempoFont.rounded(.caption, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, Spacing.xs)
-            .accessibilityElement(children: .combine)
+            timeUnderTensionBlock
+                .padding(.top, Spacing.xs)
 
             Spacer()
 
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                engine.stop()
-            } label: {
-                Text("workout.continueButton")
-                    .font(TempoFont.rounded(.title2, weight: .heavy))
-                    .tracking(3)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.xl)
-            }
-            .background(Color.accentColor, in: Capsule())
-            .foregroundStyle(.black)
-            .padding(.horizontal, Spacing.xl)
-            .padding(.bottom, Spacing.xl)
+            continueButton
+                .padding(.horizontal, Spacing.xl)
+                .padding(.bottom, Spacing.xl)
         }
-        .onAppear {
-            withAnimation(TempoAnimation.celebration(reduceMotion: reduceMotion)) {
-                completionAnimated = true
+    }
+
+    private var landscapeFinishedView: some View {
+        HStack(spacing: Spacing.xxl) {
+            VStack(spacing: Spacing.sm) {
+                checkmarkBadge
+                    .scaleEffect(0.7) // fits a compact-height screen alongside the summary column
+                Text(verbatim: Phase.done.title(locale))
+                    .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
+                    .tracking(4)
+                    .foregroundStyle(Color.accentColor)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
             }
+            .frame(maxWidth: .infinity)
+
+            VStack(spacing: Spacing.md) {
+                Text(verbatim: summaryText)
+                    .font(TempoFont.rounded(.body, weight: .medium))
+                    .foregroundStyle(.secondary)
+                timeUnderTensionBlock
+                continueButton
+            }
+            .frame(maxWidth: .infinity)
         }
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
     }
 
     private var summaryText: String {
