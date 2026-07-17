@@ -1,0 +1,16 @@
+TempoRep ist ein minimalistischer, kontrastreicher Tempo-Trainingstimer für Krafttraining.
+
+Beim Tempotraining folgt jede Wiederholung einem 4-stelligen Tempo wie 4010: exzentrisch (Absenken), Pause, konzentrisch (Heben), Pause — jeweils in Sekunden. TempoRep zählt dich durch jede Phase mit einer großen, auf einen Blick lesbaren Anzeige und Sprachansagen, sodass du beim Training nie auf eine Stoppuhr schauen musst.
+
+FUNKTIONEN
+
+- Große, kontrastreiche Anzeige, die auch von der anderen Raumseite lesbar ist, mit einem Countdown-Ring für die aktuelle Phase
+- Sprachansagen, die jede Phase in Echtzeit mitzählen ("Runter, 2, 3, 4"), plus eigene Töne und haptisches Feedback für jede Phase, Wiederholung, jeden Satz und Seitenwechsel
+- Einseitiger Modus: alle Wiederholungen zuerst auf einer Seite, dann auf der anderen, mit einstellbarer Wechselpause
+- Eine integrierte Datenbank mit 873 Übungen mit Suche und Filtern — wähle eine aus, und TempoRep schlägt passende Standardeinstellungen vor, etwa den Start mit der konzentrischen Phase bei Kreuzheben und Klimmzügen
+- Speichere eigene Presets oder nutze die integrierten, um direkt loszulegen
+- Vollständiger Verlauf jedes Trainings: Tempo, Sätze, Wiederholungen und Zeit unter Spannung
+- Hintergrundaudio: deine Musik läuft weiter, und Ansagen kommen auch bei gesperrtem Bildschirm
+- Verfügbar auf Englisch, Niederländisch, Französisch und Deutsch, folgt automatisch der Gerätesprache
+
+TempoRep läuft komplett auf deinem Gerät. Kein Konto, keine Netzwerkverbindung, kein Tracking — deine Trainingsdaten verlassen nie dein Telefon.

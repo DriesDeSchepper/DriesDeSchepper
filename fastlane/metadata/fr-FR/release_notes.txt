@@ -1,0 +1,1 @@
+Version initiale : minuteur tempo, mode unilatéral, base de données d'exercices, préréglages et traduction complète anglais/néerlandais/français/allemand.

@@ -1,0 +1,16 @@
+TempoRep is een minimalistische, contrastrijke tempotrainingstimer voor krachttraining.
+
+Bij tempotraining volgt elke herhaling een tempo van 4 cijfers, zoals 4010: excentrisch (zakken), pauze, concentrisch (omhoog), pauze — telkens in seconden. TempoRep telt je door elke fase met een groot, in één oogopslag afleesbaar scherm en gesproken aanwijzingen, zodat je nooit hoeft weg te kijken om een stopwatch te checken.
+
+FUNCTIES
+
+- Groot, contrastrijk scherm dat leesbaar is vanaf de andere kant van de ruimte, met een aftelring voor de huidige fase
+- Gesproken aanwijzingen die elke fase in real time meetellen ("Zakken, 2, 3, 4"), plus aparte geluiden en trillingen voor elke fase, herhaling, set en wissel van kant
+- Unilaterale (één-kant) modus: doe alle herhalingen aan één kant, dan de andere, met een instelbare wisselpauze
+- Een ingebouwde database van 873 oefeningen met zoek- en filterfuncties — kies er een en TempoRep stelt logische standaardinstellingen voor, zoals starten met de lift bij deadlifts en pull-ups
+- Sla je eigen presets op, of gebruik de ingebouwde, om meteen te beginnen
+- Volledige geschiedenis van elke training: tempo, sets, herhalingen en tijd onder spanning
+- Achtergrondaudio: je muziek blijft spelen en aanwijzingen blijven komen, zelfs met vergrendeld scherm
+- Beschikbaar in het Engels, Nederlands, Frans en Duits, volgt automatisch de taal van je toestel
+
+TempoRep werkt volledig op je toestel. Geen account, geen internetverbinding, geen tracking — je trainingsgegevens verlaten nooit je telefoon.

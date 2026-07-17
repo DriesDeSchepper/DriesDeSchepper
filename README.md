@@ -30,6 +30,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Screen stays awake during a workout
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks
 - Cues play even when the phone is on silent (`.playback` audio session category)
+- No network access, no accounts, no tracking, no third-party SDKs — everything lives in local `UserDefaults` and the bundled exercise dataset (see `PrivacyInfo.xcprivacy` and `PRIVACY_POLICY.md`)
 
 ## Requirements
 
@@ -85,6 +86,7 @@ TempoRep/
   Views/ExercisePickerView.swift  Searchable exercise picker
   Resources/exercises.json    Bundled exercise dataset (name/category/muscles/equipment, no images)
   Localizable.xcstrings       String catalog (en, nl, fr, de)
+  PrivacyInfo.xcprivacy       Privacy manifest — no tracking, no collected data
 
 TempoRepTests/
   WorkoutEngineTests.swift    Timeline-building logic (bilateral/unilateral/switch/reordering)
@@ -92,4 +94,8 @@ TempoRepTests/
   WorkoutPresetTests.swift    Preset application and persistence shape
   ExerciseDatabaseTests.swift  Bundled dataset loads correctly, no duplicate IDs
   LocalizationCatalogTests.swift  Every checked key resolves in all 4 languages
+
+fastlane/metadata/           App Store listing text (name/subtitle/description/keywords) in en-US/nl-NL/fr-FR/de-DE
+PRIVACY_POLICY.md            Ready-to-host privacy policy draft
+APP_STORE_SUBMISSION.md      Checklist of what's done vs. what you still need to do before submitting
 ```

@@ -1,0 +1,16 @@
+TempoRep est un minuteur d'entraînement tempo minimaliste et très contrasté pour la musculation.
+
+En entraînement tempo, chaque répétition suit un tempo à 4 chiffres comme 4010 : excentrique (descente), pause, concentrique (montée), pause — chacun en secondes. TempoRep vous accompagne à travers chaque phase avec un grand affichage lisible d'un coup d'œil et des annonces vocales, pour ne jamais avoir à quitter votre mouvement des yeux pour regarder un chronomètre.
+
+FONCTIONNALITÉS
+
+- Grand affichage très contrasté, lisible depuis l'autre bout de la pièce, avec un anneau de compte à rebours pour la phase en cours
+- Annonces vocales qui comptent chaque phase en temps réel (« Descends, 2, 3, 4 »), avec des sons et vibrations distincts pour chaque phase, répétition, série et changement de côté
+- Mode unilatéral (un côté à la fois) : faites toutes les répétitions d'un côté, puis de l'autre, avec une pause de changement réglable
+- Une base de données intégrée de 873 exercices avec recherche et filtres — choisissez-en un et TempoRep suggère des réglages pertinents, comme commencer par la phase concentrique pour les soulevés de terre et les tractions
+- Enregistrez vos propres préréglages, ou utilisez ceux intégrés, pour démarrer directement une séance
+- Historique complet de chaque séance : tempo, séries, répétitions et temps sous tension
+- Audio en arrière-plan : votre musique continue, et les annonces continuent même écran verrouillé
+- Disponible en anglais, néerlandais, français et allemand, selon la langue de votre appareil
+
+TempoRep fonctionne entièrement sur votre appareil. Pas de compte, pas de connexion réseau, pas de suivi — vos données d'entraînement ne quittent jamais votre téléphone.

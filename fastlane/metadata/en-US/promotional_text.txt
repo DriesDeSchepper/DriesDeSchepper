@@ -1,0 +1,1 @@
+A tempo training timer with spoken cues, unilateral mode, and a built-in exercise database. On-device only — no account, no tracking.

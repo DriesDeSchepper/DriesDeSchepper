@@ -1,0 +1,1 @@
+Ein Tempo-Trainingstimer mit Sprachansagen, einseitigem Modus und integrierter Übungsdatenbank. Läuft komplett auf dem Gerät — kein Konto, kein Tracking.

@@ -1,0 +1,16 @@
+TempoRep is a minimal, high-contrast tempo training timer for strength workouts.
+
+In tempo training, every rep follows a 4-digit tempo like 4010: eccentric (lowering), pause, concentric (lifting), pause — each in seconds. TempoRep counts you through every phase with a huge, glanceable display and spoken cues, so you never have to look away from your lift to check a stopwatch.
+
+FEATURES
+
+- Big, high-contrast display readable from across the room, with a countdown ring for the current phase
+- Spoken voice cues that count each phase in real time ("Down, 2, 3, 4"), plus distinct sounds and haptics for every phase, rep, set, and side change
+- Unilateral (single-side) mode: do all reps on one side, then the other, with a configurable switch pause
+- A bundled database of 873 exercises with search and filters — pick one and TempoRep suggests sensible defaults, like starting with the lift for deadlifts and pull-ups
+- Save your own presets, or use the built-in ones, to jump straight into a workout
+- Full history of every workout: tempo, sets, reps, and time under tension
+- Background audio: your music keeps playing, and cues keep coming even with the screen locked
+- Available in English, Dutch, French, and German, following your device's language automatically
+
+TempoRep works entirely on your device. No account, no network connection, no tracking — your workout data never leaves your phone.

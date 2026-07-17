@@ -1,0 +1,1 @@
+Eerste release: tempotimer, unilaterale modus, oefeningendatabase, presets en volledige Engelse/Nederlandse/Franse/Duitse vertaling.
