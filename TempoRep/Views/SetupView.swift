@@ -17,16 +17,6 @@ struct SetupView: View {
 
             ScrollView {
                 VStack(spacing: 32) {
-                    VStack(spacing: 4) {
-                        Text(verbatim: "TEMPOREP")
-                            .font(.system(size: 40, weight: .heavy, design: .rounded))
-                            .tracking(8)
-                        Text("tempo training timer")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 24)
-
                     exerciseSection
                     tempoSection
                     presetsSection
@@ -35,6 +25,7 @@ struct SetupView: View {
                     estimateSection
                 }
                 .padding(.horizontal, 24)
+                .padding(.top, 60)
                 .padding(.bottom, 16)
             }
         }
@@ -60,6 +51,7 @@ struct SetupView: View {
                 }
                 .accessibilityLabel(Text("History"))
             }
+            .padding(.top, 8)
             .padding(.trailing, 8)
         }
         .sheet(isPresented: $showHistory) {

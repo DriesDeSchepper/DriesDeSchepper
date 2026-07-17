@@ -79,6 +79,7 @@ TempoRep/
   Services/LocalizationManager.swift  System-language / override language resolution
   Services/ExerciseDatabase.swift  Loads the bundled dataset, tracks recents
   Services/PresetStore.swift  Persisted log of user-saved presets
+  Views/SplashView.swift      Brief launch screen with the wordmark
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
   Views/WorkoutView.swift     In-workout display and controls
   Views/HistoryView.swift     Workout history sheet
