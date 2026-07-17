@@ -30,6 +30,7 @@ final class WorkoutEngine {
     private(set) var currentSide: Side?
     private(set) var phaseRemaining: TimeInterval = 0
     private(set) var phaseProgress: Double = 0 // 0...1 within the current segment
+    private(set) var lastTimeUnderTension: TimeInterval = 0
 
     @ObservationIgnored private var timeline: [Segment] = []
     @ObservationIgnored private var startDate = Date()
@@ -238,6 +239,12 @@ final class WorkoutEngine {
             let locale = LocalizationManager.shared.locale
             speech.speak(Phase.done.voiceWord(locale), languageCode: LocalizationManager.shared.language.speechLanguageCode)
         }
+        // Both sides' reps count, and — for a unilateral workout — the
+        // switch pause between them, since it's part of the set rather than
+        // rest between sets.
+        let timeUnderTension = timeline.filter { $0.rep > 0 || $0.phase == .switchSides }.reduce(0) { $0 + $1.duration }
+        lastTimeUnderTension = timeUnderTension
+
         history.add(WorkoutRecord(
             id: UUID(),
             date: Date(),
@@ -245,10 +252,7 @@ final class WorkoutEngine {
             sets: config.sets,
             repsPerSet: config.repsPerSet,
             restSeconds: config.restSeconds,
-            // Both sides' reps count, and — for a unilateral workout — the
-            // switch pause between them, since it's part of the set rather
-            // than rest between sets.
-            timeUnderTension: timeline.filter { $0.rep > 0 || $0.phase == .switchSides }.reduce(0) { $0 + $1.duration },
+            timeUnderTension: timeUnderTension,
             totalDuration: timeline.last?.end ?? 0
         ))
     }

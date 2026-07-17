@@ -3,6 +3,7 @@ import SwiftUI
 struct WorkoutView: View {
     let engine: WorkoutEngine
     @Environment(\.locale) private var locale
+    @State private var completionAnimated = false
 
     var body: some View {
         ZStack {
@@ -121,18 +122,44 @@ struct WorkoutView: View {
     private var finishedView: some View {
         VStack(spacing: 20) {
             Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 130, height: 130)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 52, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .scaleEffect(completionAnimated ? 1 : 0.4)
+            .opacity(completionAnimated ? 1 : 0)
+
             Text(verbatim: Phase.done.title(locale))
-                .font(.system(size: 72, weight: .heavy, design: .rounded))
+                .font(.system(size: 56, weight: .heavy, design: .rounded))
                 .tracking(4)
                 .foregroundStyle(Color.accentColor)
+
             Text(verbatim: summaryText)
                 .font(.system(size: 18, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
+
+            VStack(spacing: 2) {
+                Text(verbatim: Self.mmss(engine.lastTimeUnderTension))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.white)
+                Text("under tension")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 4)
+
             Spacer()
+
             Button {
                 engine.stop()
             } label: {
-                Text("FINISH")
+                Text("workout.continueButton")
                     .font(.system(size: 24, weight: .heavy, design: .rounded))
                     .tracking(3)
                     .frame(maxWidth: .infinity)
@@ -143,11 +170,24 @@ struct WorkoutView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) {
+                completionAnimated = true
+            }
+        }
     }
 
     private var summaryText: String {
-        String(format: L("%d sets · %d reps @ %@", locale),
-               engine.config.sets, engine.config.repsPerSet, engine.config.tempoString)
+        let sets = engine.config.sets
+        let reps = engine.config.repsPerSet
+        let setsWord = L(sets == 1 ? "workout.set" : "workout.sets", locale)
+        let repsWord = L(reps == 1 ? "workout.rep" : "workout.reps", locale)
+        return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(engine.config.tempoString)"
+    }
+
+    private static func mmss(_ interval: TimeInterval) -> String {
+        let seconds = Int(interval.rounded())
+        return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
     // MARK: - Derived text
