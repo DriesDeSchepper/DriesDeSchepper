@@ -9,6 +9,7 @@ struct ExercisePickerView: View {
     @State private var searchText = ""
     @State private var muscleFilter: String?
     @State private var equipmentFilter: String?
+    @State private var showFilters = false
 
     var body: some View {
         NavigationStack {
@@ -50,31 +51,31 @@ struct ExercisePickerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Picker("Muscle", selection: $muscleFilter) {
-                            Text("All muscles").tag(String?.none)
-                            ForEach(database.allMuscles, id: \.self) { muscle in
-                                Text(verbatim: muscle.capitalized).tag(Optional(muscle))
-                            }
-                        }
-                        Picker("Equipment", selection: $equipmentFilter) {
-                            Text("All equipment").tag(String?.none)
-                            ForEach(database.allEquipment, id: \.self) { equipment in
-                                Text(verbatim: equipment.capitalized).tag(Optional(equipment))
-                            }
-                        }
+                    Button {
+                        showFilters = true
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        Image(systemName: activeFilterCount > 0
+                              ? "line.3.horizontal.decrease.circle.fill"
+                              : "line.3.horizontal.decrease.circle")
                     }
+                    .accessibilityLabel(Text("Filters"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
                 }
             }
+            .sheet(isPresented: $showFilters) {
+                FilterSheet(muscles: database.allMuscles, equipment: database.allEquipment,
+                            muscleFilter: $muscleFilter, equipmentFilter: $equipmentFilter)
+            }
         }
         .preferredColorScheme(.dark)
         .tint(Color.accentColor)
+    }
+
+    private var activeFilterCount: Int {
+        (muscleFilter == nil ? 0 : 1) + (equipmentFilter == nil ? 0 : 1)
     }
 
     private var filteredExercises: [Exercise] {
@@ -114,8 +115,96 @@ struct ExercisePickerView: View {
             engine.config.unilateral = true
         }
         engine.config.startPhase = exercise.startPhase
+        if let suggested = exercise.suggestedTempo {
+            engine.config.tempoDigits = suggested
+        }
         database.markUsed(exercise)
         dismiss()
+    }
+}
+
+/// A plain scrollable List, unlike the cramped Menu-nested-Picker this
+/// replaced — that layout made it easy to lose track of options near the
+/// end of a long alphabetical list (e.g. "Triceps", last of 17 muscles).
+private struct FilterSheet: View {
+    let muscles: [String]
+    let equipment: [String]
+    @Binding var muscleFilter: String?
+    @Binding var equipmentFilter: String?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    selectableRow(isSelected: muscleFilter == nil) {
+                        muscleFilter = nil
+                    } label: {
+                        Text("All muscles")
+                    }
+                    ForEach(muscles, id: \.self) { muscle in
+                        selectableRow(isSelected: muscleFilter == muscle) {
+                            muscleFilter = muscle
+                        } label: {
+                            Text(verbatim: muscle.capitalized)
+                        }
+                    }
+                } header: {
+                    Text("Muscle")
+                }
+
+                Section {
+                    selectableRow(isSelected: equipmentFilter == nil) {
+                        equipmentFilter = nil
+                    } label: {
+                        Text("All equipment")
+                    }
+                    ForEach(equipment, id: \.self) { item in
+                        selectableRow(isSelected: equipmentFilter == item) {
+                            equipmentFilter = item
+                        } label: {
+                            Text(verbatim: item.capitalized)
+                        }
+                    }
+                } header: {
+                    Text("Equipment")
+                }
+            }
+            .listRowBackground(Color.white.opacity(0.06))
+            .scrollContentBackground(.hidden)
+            .background(Color.black)
+            .navigationTitle("Filters")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+        .tint(Color.accentColor)
+    }
+
+    private func selectableRow(
+        isSelected: Bool,
+        action: @escaping () -> Void,
+        @ViewBuilder label: () -> some View
+    ) -> some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        } label: {
+            HStack {
+                label()
+                    .foregroundStyle(.white)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
     }
 }
 

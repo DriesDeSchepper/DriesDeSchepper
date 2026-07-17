@@ -117,7 +117,24 @@ struct SetupView: View {
                     tempoInfoPopover
                 }
             }
+
+            if let hint = tempoSuggestionHint {
+                Text(verbatim: hint)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
         }
+    }
+
+    /// Shown only while the digits still match the exercise's suggestion —
+    /// disappears the moment the user edits away from it, so it never reads
+    /// as a stale claim about what's currently dialed in.
+    private var tempoSuggestionHint: String? {
+        guard let exercise = selectedExercise,
+              let suggested = exercise.suggestedTempo,
+              let muscle = exercise.primaryMuscles.first,
+              engine.config.tempoDigits == suggested else { return nil }
+        return String(format: L("Suggested for %@", locale), muscle.capitalized)
     }
 
     private var tempoInfoPopover: some View {
@@ -148,18 +165,18 @@ struct SetupView: View {
 
     private var presetsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Presets")
+            Text(verbatim: presetsHeaderText)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(WorkoutPreset.builtIn) { preset in
+                    ForEach(displayedBuiltInPresets) { preset in
                         PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
                             apply(preset)
                         }
                     }
-                    ForEach(engine.presets.custom) { preset in
+                    ForEach(displayedCustomPresets) { preset in
                         PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
                             apply(preset)
                         }
@@ -195,6 +212,37 @@ struct SetupView: View {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             }
         }
+    }
+
+    /// Presets with 2-3 different tempos for the same exercise (e.g. one per
+    /// training phase) are common — once that exercise is selected, narrow
+    /// the row to just those instead of burying them among every preset.
+    /// Falls back to showing everything when nothing is selected, or when
+    /// the selected exercise has no presets of its own yet.
+    private var hasPresetsForSelectedExercise: Bool {
+        guard let exerciseID = engine.config.selectedExerciseID else { return false }
+        return (WorkoutPreset.builtIn + engine.presets.custom).contains { $0.exerciseID == exerciseID }
+    }
+
+    private var displayedBuiltInPresets: [WorkoutPreset] {
+        guard hasPresetsForSelectedExercise, let exerciseID = engine.config.selectedExerciseID else {
+            return WorkoutPreset.builtIn
+        }
+        return WorkoutPreset.builtIn.filter { $0.exerciseID == exerciseID }
+    }
+
+    private var displayedCustomPresets: [WorkoutPreset] {
+        guard hasPresetsForSelectedExercise, let exerciseID = engine.config.selectedExerciseID else {
+            return engine.presets.custom
+        }
+        return engine.presets.custom.filter { $0.exerciseID == exerciseID }
+    }
+
+    private var presetsHeaderText: String {
+        if hasPresetsForSelectedExercise, let exercise = selectedExercise {
+            return String(format: L("Presets for %@", locale), exercise.name)
+        }
+        return L("Presets", locale)
     }
 
     private func apply(_ preset: WorkoutPreset) {

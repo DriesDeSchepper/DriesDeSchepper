@@ -38,5 +38,29 @@ struct ExerciseDatabaseTests {
         let db = ExerciseDatabase.shared
         #expect(db.allMuscles.contains("quadriceps"))
         #expect(db.allEquipment.contains("barbell"))
+        // Regression check for a UI bug (not a data bug): triceps must be
+        // present and reachable through the same filter list.
+        #expect(db.allMuscles.contains("triceps"))
+    }
+
+    @Test func suggestedTempoFavorsExplosiveConcentricForSmallMuscles() {
+        let db = ExerciseDatabase.shared
+        #expect(db.exercise(id: "Balance_Board")?.suggestedTempo == [4, 2, 0, 0])
+    }
+
+    @Test func suggestedTempoStaysControlledForCore() {
+        let db = ExerciseDatabase.shared
+        #expect(db.exercise(id: "3_4_Sit-Up")?.suggestedTempo == [3, 1, 2, 1])
+    }
+
+    @Test func suggestedTempoDefaultsForCompoundMuscles() {
+        let db = ExerciseDatabase.shared
+        #expect(db.exercise(id: "Barbell_Full_Squat")?.suggestedTempo == [3, 0, 1, 0])
+    }
+
+    @Test func suggestedTempoIsNilOutsideResistanceCategories() {
+        let db = ExerciseDatabase.shared
+        #expect(db.exercise(id: "90_90_Hamstring")?.category == "stretching")
+        #expect(db.exercise(id: "90_90_Hamstring")?.suggestedTempo == nil)
     }
 }
