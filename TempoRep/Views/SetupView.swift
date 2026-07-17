@@ -58,15 +58,12 @@ struct SetupView: View {
         }
         .sheet(isPresented: $showHistory) {
             HistoryView(store: engine.history)
-                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(engine: engine)
-                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView(engine: engine)
-                .presentationDetents([.large])
         }
         .safeAreaInset(edge: .bottom) { startButton }
     }
@@ -104,16 +101,8 @@ struct SetupView: View {
 
     private var tempoSection: some View {
         VStack(spacing: Spacing.md) {
-            HStack(spacing: Spacing.lg) {
-                DigitStepper(label: "ECC", accessibilityName: "Eccentric duration",
-                             digit: $engine.config.tempoDigits[0])
-                DigitStepper(label: "PAUSE", accessibilityName: "Pause at bottom duration",
-                             digit: $engine.config.tempoDigits[1])
-                DigitStepper(label: "CON", accessibilityName: "Concentric duration",
-                             digit: $engine.config.tempoDigits[2])
-                DigitStepper(label: "PAUSE", accessibilityName: "Pause at top duration",
-                             digit: $engine.config.tempoDigits[3])
-
+            HStack {
+                Spacer()
                 Button {
                     showTempoInfo = true
                 } label: {
@@ -126,6 +115,21 @@ struct SetupView: View {
                     tempoInfoPopover
                 }
             }
+
+            // A standalone row so the 4 digits center on their own — sharing
+            // the row with the info button (as this used to) pushed them
+            // off-center to make room for it.
+            HStack(spacing: Spacing.lg) {
+                DigitStepper(label: "ECC", accessibilityName: "Eccentric duration",
+                             digit: $engine.config.tempoDigits[0])
+                DigitStepper(label: "PAUSE", accessibilityName: "Pause at bottom duration",
+                             digit: $engine.config.tempoDigits[1])
+                DigitStepper(label: "CON", accessibilityName: "Concentric duration",
+                             digit: $engine.config.tempoDigits[2])
+                DigitStepper(label: "PAUSE", accessibilityName: "Pause at top duration",
+                             digit: $engine.config.tempoDigits[3])
+            }
+            .frame(maxWidth: .infinity)
 
             if let hint = tempoSuggestionHint {
                 Text(verbatim: hint)
@@ -329,14 +333,16 @@ struct SetupView: View {
                 .padding(.vertical, Spacing.xl)
         }
         .background(Color.accentColor, in: Capsule())
-        // Fixed black, not `.primaryText` — the accent is a bright, fixed
-        // color in both appearances, so black keeps full contrast on it
-        // regardless of light/dark mode.
+        // Fixed black, not `.primaryText` — checked against both of
+        // AccentColor's light/dark variants (see Assets.xcassets), black
+        // clears WCAG AA contrast on either one.
         .foregroundStyle(.black)
         .padding(.horizontal, Spacing.xl)
         .padding(.top, Spacing.sm)
         .padding(.bottom, Spacing.sm)
-        .background(Color.tempoBackground)
+        // A blurred material, not a solid fill — the button floats over
+        // the scroll content instead of sitting on an opaque bar.
+        .background(.ultraThinMaterial, ignoresSafeAreaEdges: .bottom)
     }
 
     private func formatDuration(_ interval: TimeInterval) -> String {

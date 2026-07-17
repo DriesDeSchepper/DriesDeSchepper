@@ -58,6 +58,9 @@ struct ExercisePickerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    CloseButton { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showFilters = true
                     } label: {
@@ -65,16 +68,13 @@ struct ExercisePickerView: View {
                               ? "line.3.horizontal.decrease.circle.fill"
                               : "line.3.horizontal.decrease.circle")
                     }
+                    .foregroundStyle(.secondary)
                     .accessibilityLabel(Text("Filters"))
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    CloseButton { dismiss() }
                 }
             }
             .sheet(isPresented: $showFilters) {
                 FilterSheet(muscles: database.allMuscles, equipment: database.allEquipment,
                             muscleFilter: $muscleFilter, equipmentFilter: $equipmentFilter)
-                    .presentationDetents([.medium, .large])
             }
         }
         .tint(Color.accentColor)
@@ -196,7 +196,7 @@ private struct FilterSheet: View {
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     CloseButton { dismiss() }
                 }
             }
@@ -218,7 +218,7 @@ private struct FilterSheet: View {
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.primary)
                 }
             }
         }

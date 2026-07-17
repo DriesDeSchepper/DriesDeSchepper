@@ -21,15 +21,15 @@ struct HistoryView: View {
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    CloseButton { dismiss() }
+                }
                 if !store.records.isEmpty {
-                    ToolbarItem(placement: .topBarLeading) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button("Clear", role: .destructive) {
                             store.clear()
                         }
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    CloseButton { dismiss() }
                 }
             }
         }
@@ -39,6 +39,7 @@ struct HistoryView: View {
     private var emptyState: some View {
         ContentUnavailableView {
             Label("No workouts yet", systemImage: "clock.arrow.circlepath")
+                .foregroundStyle(.secondary)
         } description: {
             Text("Finished workouts show up here.")
         }

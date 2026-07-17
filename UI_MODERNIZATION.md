@@ -20,7 +20,9 @@ One file, four token groups. Every screen was rewritten to use only these
   Plus `.tempoWorkoutBackground` / `.tempoOnDark` / `.tempoOnDarkSurface(Raised)`
   for the two screens that deliberately never adapt (see Part 2). One
   accent color throughout, defined once in `Assets.xcassets/AccentColor` —
-  unchanged, it was already correct.
+  **updated in the follow-up round below**: it now has separate light/dark
+  appearance variants (it didn't originally, which is exactly what broke
+  contrast in light mode — see "Follow-up fixes").
 - **Spacing** — `Spacing.xs/sm/md/lg/xl/xxl` = 4/8/12/16/24/32. Every
   padding and stack-spacing call in every view now uses one of these six
   values.
@@ -265,3 +267,47 @@ final APIs are public:
 - Re-check `@ScaledMetric`'s interaction with any new Dynamic Type range
   Apple adds — unlikely to break anything (it's designed to be
   forward-compatible), but worth a glance at release notes.
+
+## Follow-up fixes (from real light-mode testing)
+
+Once the adaptive-appearance change above actually got seen in light mode:
+
+- **Accent-color contrast in light mode.** `AccentColor` was a single
+  "universal" value (a bright lime, `#C7FF45`-ish) with no light/dark
+  variants — fine when the whole app was forced dark, actively broken
+  once Setup/Settings/History/the picker started following the system
+  appearance, since that same bright, high-luminosity green has poor
+  contrast against a light background. Fixed by giving `AccentColor` a
+  separate light-appearance value (`Assets.xcassets/AccentColor` — a
+  darker, more saturated olive-green in the same hue family, ~4.6:1
+  contrast against white) while the dark-appearance value stays exactly
+  the original lime. Every screen that's always-dark (`WorkoutView`,
+  `SplashView`) keeps resolving the original bright variant automatically
+  since they force the dark trait; nothing there changed.
+- **Tempo digits not centered.** The info (`ⓘ`) button used to share a
+  row with the 4 digit steppers, pushing them off-center to make room for
+  it. Moved to its own right-aligned row above the digits, which now
+  center in a `.frame(maxWidth: .infinity)` row of their own.
+- **Start button now floats.** It sat on an opaque `.tempoBackground` bar
+  (solid white in light mode) — swapped for `.ultraThinMaterial`, so it's
+  a blurred, floating capsule over the scrolling content instead of a
+  bar with a hard edge.
+- **Modals are full-height, not resizable half-sheets.** Removed the
+  `.presentationDetents([.medium, .large])` added in the first pass —
+  Settings/History/the exercise picker (and its nested filter sheet) now
+  just use the sheet default (full height), no partial "half" state.
+- **Close button moved to the leading (left) side** in all four modals.
+  Where a leading item already existed (History's "Clear", the exercise
+  picker's "Filters"), it moved to trailing instead, rather than being
+  removed or doubled up.
+- **No more green icons inside modals.** The `.tint(Color.accentColor)`
+  on these `NavigationStack`s is still there — it's what correctly keeps
+  Toggle/Picker/segmented-control selection colors on-brand — but every
+  standalone icon glyph that had been silently inheriting that tint
+  (the exercise-picker's Filters icon, the filter sheet's selection
+  checkmark, History's empty-state icon) now has an explicit
+  `.foregroundStyle(.secondary)` / `.primary` instead. `CloseButton` was
+  already neutral. The favorite star (yellow) and a history row's tempo
+  number (accent-colored text, not an icon) were left as-is — not in
+  scope of "icons," and the tempo number's contrast is covered by the
+  AccentColor fix above.
