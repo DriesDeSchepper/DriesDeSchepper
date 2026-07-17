@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// A plain, native `List` — see `SettingsView`'s doc comment for why: no
+/// custom background fighting the system's own materials, so this adapts
+/// to light/dark automatically and stays visually correct as OS styling
+/// changes underneath it.
 struct HistoryView: View {
     let store: HistoryStore
     @Environment(\.dismiss) private var dismiss
@@ -7,16 +11,7 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // A plain `.background(Color.black)` on the conditional
-                // content below only covers whatever size that content
-                // reports — for the empty state (a compact VStack with no
-                // spacer) that's just a tight box around the icon and text,
-                // not the full screen, leaving a visible black rectangle
-                // against the surrounding system dark background. Painting
-                // black first, full-bleed, avoids that regardless of which
-                // branch is showing.
-                Color.black.ignoresSafeArea()
+            Group {
                 if store.records.isEmpty {
                     emptyState
                 } else {
@@ -25,15 +20,12 @@ struct HistoryView: View {
             }
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 if !store.records.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
                         Button("Clear", role: .destructive) {
                             store.clear()
                         }
-                        .foregroundStyle(.red)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -41,19 +33,14 @@ struct HistoryView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .tint(Color.accentColor)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 44, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text("No workouts yet")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
+        ContentUnavailableView {
+            Label("No workouts yet", systemImage: "clock.arrow.circlepath")
+        } description: {
             Text("Finished workouts show up here.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 
@@ -63,45 +50,44 @@ struct HistoryView: View {
                 row(for: record)
             }
             .onDelete { store.delete(at: $0) }
-            .listRowBackground(Color.white.opacity(0.06))
         }
-        .scrollContentBackground(.hidden)
     }
 
     private func row(for record: WorkoutRecord) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: Spacing.md) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 if let exerciseName = record.exerciseName {
                     Text(verbatim: exerciseName)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .font(TempoFont.rounded(.subheadline, weight: .semibold))
                         .lineLimit(1)
                 }
-                HStack(spacing: 8) {
+                HStack(spacing: Spacing.sm) {
                     Text(record.tempoString)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(TempoFont.rounded(.title3, weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityLabel(Text(verbatim: record.tempoDigits.map(String.init).joined(separator: "-")))
                     Text("\(record.sets)×\(record.repsPerSet)")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(TempoFont.rounded(.body, weight: .semibold))
                         .monospacedDigit()
                 }
                 Text(verbatim: record.date.formatted(
                     Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale)))
-                    .font(.footnote)
+                    .font(TempoFont.rounded(.footnote))
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: .trailing, spacing: Spacing.xs) {
                 Text(Self.formatTimeUnderTension(record.timeUnderTension))
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(TempoFont.rounded(.body, weight: .bold))
                     .monospacedDigit()
                 Text("under tension")
-                    .font(.caption2)
+                    .font(TempoFont.rounded(.caption2))
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
+        .accessibilityElement(children: .combine)
     }
 
     /// Under a minute, "0:15" reads ambiguously (seconds? minutes?) — spell
@@ -118,5 +104,4 @@ struct HistoryView: View {
 
 #Preview {
     HistoryView(store: HistoryStore())
-        .preferredColorScheme(.dark)
 }

@@ -10,7 +10,7 @@ struct CloseButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 22))
+                .font(.title2) // a Dynamic Type text style, not a fixed point size
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
         }

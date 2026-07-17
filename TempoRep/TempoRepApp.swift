@@ -5,14 +5,19 @@ struct TempoRepApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .preferredColorScheme(.dark)
         }
     }
 }
 
+/// No forced color scheme here — Setup, Settings, History, and the
+/// exercise picker follow the system appearance (see `Color.tempoBackground`
+/// in DesignSystem.swift). The splash and workout screens are the
+/// deliberate exceptions and force dark themselves; see their own
+/// `.preferredColorScheme(.dark)`.
 struct RootView: View {
     @State private var engine = WorkoutEngine()
     @State private var showSplash = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let localization = LocalizationManager.shared
 
     var body: some View {
@@ -29,8 +34,8 @@ struct RootView: View {
             }
         }
         .environment(\.locale, localization.locale)
-        .animation(.easeInOut(duration: 0.3), value: showSplash)
-        .animation(.easeInOut(duration: 0.25), value: engine.state == .idle)
+        .animation(TempoAnimation.standard(reduceMotion: reduceMotion), value: showSplash)
+        .animation(TempoAnimation.standard(reduceMotion: reduceMotion), value: engine.state == .idle)
         .task {
             try? await Task.sleep(for: .seconds(1.1))
             showSplash = false

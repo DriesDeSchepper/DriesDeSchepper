@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 
+/// A plain, native `List` — see `SettingsView`'s doc comment for why.
 struct ExercisePickerView: View {
     @Bindable var engine: WorkoutEngine
     @Environment(\.dismiss) private var dismiss
@@ -52,14 +53,9 @@ struct ExercisePickerView: View {
                     }
                 }
             }
-            .listRowBackground(Color.white.opacity(0.06))
-            .scrollContentBackground(.hidden)
-            .background(Color.black)
             .searchable(text: $searchText, prompt: Text("Search exercises"))
             .navigationTitle("Exercise")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -78,10 +74,9 @@ struct ExercisePickerView: View {
             .sheet(isPresented: $showFilters) {
                 FilterSheet(muscles: database.allMuscles, equipment: database.allEquipment,
                             muscleFilter: $muscleFilter, equipmentFilter: $equipmentFilter)
-                    .presentationBackground(Color.black)
+                    .presentationDetents([.medium, .large])
             }
         }
-        .preferredColorScheme(.dark)
         .tint(Color.accentColor)
     }
 
@@ -98,16 +93,15 @@ struct ExercisePickerView: View {
     }
 
     private func row(_ exercise: Exercise) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Spacing.md) {
             Button {
                 select(exercise)
             } label: {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(verbatim: exercise.name)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .font(TempoFont.rounded(.callout, weight: .semibold))
                     Text(verbatim: captionText(exercise))
-                        .font(.caption)
+                        .font(TempoFont.rounded(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -120,13 +114,14 @@ struct ExercisePickerView: View {
                 database.toggleFavorite(exercise)
             } label: {
                 Image(systemName: database.isFavorite(exercise) ? "star.fill" : "star")
-                    .font(.system(size: 17))
+                    .font(TempoFont.rounded(.body))
                     .foregroundStyle(database.isFavorite(exercise) ? .yellow : .secondary)
-                    .frame(width: 32, height: 32)
+                    .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text(database.isFavorite(exercise) ? "Remove from favorites" : "Add to favorites"))
         }
+        .contentShape(Rectangle())
     }
 
     private func captionText(_ exercise: Exercise) -> String {
@@ -198,20 +193,14 @@ private struct FilterSheet: View {
                     Text("Equipment")
                 }
             }
-            .listRowBackground(Color.white.opacity(0.06))
-            .scrollContentBackground(.hidden)
-            .background(Color.black)
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     CloseButton { dismiss() }
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .tint(Color.accentColor)
     }
 
@@ -226,7 +215,6 @@ private struct FilterSheet: View {
         } label: {
             HStack {
                 label()
-                    .foregroundStyle(.white)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
@@ -234,10 +222,10 @@ private struct FilterSheet: View {
                 }
             }
         }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
 #Preview {
     ExercisePickerView(engine: WorkoutEngine())
-        .preferredColorScheme(.dark)
 }

@@ -16,7 +16,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Tempo input as 4 digits, with a toggle for which phase a rep starts with (eccentric or concentric)
 - Reps per set, number of sets, rest between sets
 - Huge phase name + countdown ring, readable from across the room
-- Distinct sound + haptic cues for phase changes, rep completion, and set completion
+- Distinct sound + haptic cues for phase changes (single tap), rep completion (double tap), and set completion (triple ascending tap) — built with Core Haptics for genuinely different felt patterns, not just different impact intensities; falls back to plain `UIImpactFeedbackGenerator`/`UINotificationFeedbackGenerator` on hardware without a custom-haptics-capable Taptic Engine
 - Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
 - Optional voice countdown (toggle in Settings): spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language by default, or a specific installed voice picked in Settings (with an instant spoken preview, and each language remembering its own choice)
@@ -30,7 +30,9 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Workout history: finished workouts are logged with exercise (if one was picked), tempo, sets × reps, and time under tension (shown as "15s" under a minute, "1:30" once it isn't, to avoid an ambiguous bare "0:15")
 - Finish screen shows a checkmark animation, correctly-pluralized sets/reps ("1 rep", not "1 reps"), and time under tension for that workout
 - Screen stays awake during a workout
-- Settings, History, and the exercise picker are opaque black sheets top to bottom (nav bar included, no translucent-over-content seam) with the system's standard round close button, not a text "Done"
+- Settings, History, and the exercise picker are plain native `Form`/`List` sheets (system materials, resizable via `.presentationDetents`) with the system's standard round close button, not a text "Done"; they follow the system light/dark appearance, while the workout screen and launch splash are deliberately always dark (see `WorkoutView`'s doc comment)
+- Every color, font, spacing, corner-radius, and animation value in the UI comes from one design-system file (`DesignSystem.swift`) — semantic tokens, a 4/8/12/16/24/32 spacing scale, and Dynamic Type text styles throughout (the oversized workout-display digits scale via `@ScaledMetric` instead, since they're bigger than any standard text style)
+- VoiceOver: tempo digit steppers and counters (reps/sets/rest/switch time) present as single adjustable elements with real labels, not unlabeled +/- buttons; the workout screen announces phase changes via `UIAccessibility.post` independent of the optional voice-cue feature; Reduce Motion replaces the finish-screen checkmark's pop-in with a plain crossfade
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks
 - Cues play even when the phone is on silent (`.playback` audio session category)
 - No network access, no accounts, no tracking, no third-party SDKs — everything lives in local `UserDefaults` and the bundled exercise dataset (see `PrivacyInfo.xcprivacy` and `PRIVACY_POLICY.md`)
@@ -71,6 +73,7 @@ xcodebuild test -project TempoRep.xcodeproj -scheme TempoRep \
 ```
 TempoRep/
   TempoRepApp.swift              App entry point
+  DesignSystem.swift          Semantic color/spacing/typography/motion tokens — the only source of styling constants
   Models/WorkoutModels.swift  Config, phases, timeline segments
   Models/Exercise.swift       Bundled exercise-database entry
   Models/WorkoutPreset.swift  Built-in and user-saved exercise+settings presets
@@ -105,4 +108,5 @@ TempoRepTests/
 fastlane/metadata/           App Store listing text (name/subtitle/description/keywords) in en-US/nl-NL/fr-FR/de-DE
 PRIVACY_POLICY.md            Ready-to-host privacy policy draft
 APP_STORE_SUBMISSION.md      Checklist of what's done vs. what you still need to do before submitting
+UI_MODERNIZATION.md          Design-system audit, native-iOS-26 pass, and the Live Activity proposal
 ```

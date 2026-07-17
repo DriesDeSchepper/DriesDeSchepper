@@ -1,6 +1,10 @@
 import SwiftUI
 import AVFoundation
 
+/// A plain, native `Form` — no custom backgrounds or row colors. Settings
+/// screens are exactly what `Form` is for; letting it use the system's own
+/// grouped-list materials means it adapts to light/dark automatically and
+/// picks up future OS styling (Liquid Glass and beyond) for free.
 struct SettingsView: View {
     @Bindable var engine: WorkoutEngine
     @Environment(\.dismiss) private var dismiss
@@ -29,7 +33,6 @@ struct SettingsView: View {
                 } header: {
                     Text("Language")
                 }
-                .listRowBackground(Color.white.opacity(0.06))
 
                 Section {
                     Toggle("Voice countdown", isOn: $engine.config.voiceCues)
@@ -55,21 +58,15 @@ struct SettingsView: View {
                     // there's no need to spell out what each one sounds like.
                     Text("Shows voices for the app's current language, set above.")
                 }
-                .listRowBackground(Color.white.opacity(0.06))
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.black)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     CloseButton { dismiss() }
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .tint(Color.accentColor)
     }
 
@@ -98,5 +95,4 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView(engine: WorkoutEngine())
-        .preferredColorScheme(.dark)
 }

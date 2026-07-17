@@ -4,6 +4,7 @@ import UIKit
 struct SetupView: View {
     @Bindable var engine: WorkoutEngine
     @Environment(\.locale) private var locale
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var showExercisePicker = false
@@ -14,10 +15,10 @@ struct SetupView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.tempoBackground.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 32) {
+                VStack(spacing: Spacing.xxl) {
                     exerciseSection
                     tempoSection
                     presetsSection
@@ -25,20 +26,20 @@ struct SetupView: View {
                     unilateralSection
                     estimateSection
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 60)
-                .padding(.bottom, 16)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.top, TempoMetrics.setupTopInset)
+                .padding(.bottom, Spacing.lg)
             }
         }
         .overlay(alignment: .topTrailing) {
-            HStack(spacing: 4) {
+            HStack(spacing: Spacing.xs) {
                 Button {
                     showSettings = true
                 } label: {
                     Image(systemName: "gearshape")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(TempoFont.rounded(.body, weight: .semibold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                 }
                 .accessibilityLabel(Text("Settings"))
 
@@ -46,26 +47,26 @@ struct SetupView: View {
                     showHistory = true
                 } label: {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(TempoFont.rounded(.body, weight: .semibold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                 }
                 .accessibilityLabel(Text("History"))
             }
-            .padding(.top, 8)
-            .padding(.trailing, 8)
+            .padding(.top, Spacing.sm)
+            .padding(.trailing, Spacing.sm)
         }
         .sheet(isPresented: $showHistory) {
             HistoryView(store: engine.history)
-                .presentationBackground(Color.black)
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(engine: engine)
-                .presentationBackground(Color.black)
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView(engine: engine)
-                .presentationBackground(Color.black)
+                .presentationDetents([.large])
         }
         .safeAreaInset(edge: .bottom) { startButton }
     }
@@ -77,23 +78,24 @@ struct SetupView: View {
             showExercisePicker = true
         } label: {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Exercise")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(TempoFont.rounded(.caption, weight: .semibold))
                         .foregroundStyle(.secondary)
                     Text(verbatim: selectedExercise?.name ?? L("No exercise selected", locale))
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .font(TempoFont.rounded(.body, weight: .semibold))
+                        .foregroundStyle(.primary)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(TempoFont.rounded(.footnote, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
-            .padding(16)
-            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+            .padding(Spacing.lg)
+            .background(Color.tempoSurface, in: RoundedRectangle(cornerRadius: CornerRadius.md))
         }
         .buttonStyle(.plain)
+        .accessibilityHint(Text("Opens the exercise picker"))
     }
 
     private var selectedExercise: Exercise? {
@@ -101,18 +103,22 @@ struct SetupView: View {
     }
 
     private var tempoSection: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 16) {
-                DigitStepper(label: "ECC", digit: $engine.config.tempoDigits[0])
-                DigitStepper(label: "PAUSE", digit: $engine.config.tempoDigits[1])
-                DigitStepper(label: "CON", digit: $engine.config.tempoDigits[2])
-                DigitStepper(label: "PAUSE", digit: $engine.config.tempoDigits[3])
+        VStack(spacing: Spacing.md) {
+            HStack(spacing: Spacing.lg) {
+                DigitStepper(label: "ECC", accessibilityName: "Eccentric duration",
+                             digit: $engine.config.tempoDigits[0])
+                DigitStepper(label: "PAUSE", accessibilityName: "Pause at bottom duration",
+                             digit: $engine.config.tempoDigits[1])
+                DigitStepper(label: "CON", accessibilityName: "Concentric duration",
+                             digit: $engine.config.tempoDigits[2])
+                DigitStepper(label: "PAUSE", accessibilityName: "Pause at top duration",
+                             digit: $engine.config.tempoDigits[3])
 
                 Button {
                     showTempoInfo = true
                 } label: {
                     Image(systemName: "info.circle")
-                        .font(.system(size: 15))
+                        .font(TempoFont.rounded(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityLabel(Text("Tempo details"))
@@ -123,7 +129,7 @@ struct SetupView: View {
 
             if let hint = tempoSuggestionHint {
                 Text(verbatim: hint)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(TempoFont.rounded(.caption2, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }
@@ -141,15 +147,15 @@ struct SetupView: View {
     }
 
     private var tempoInfoPopover: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
             Text("Concentric 0 = explosive (timed as 1 s)")
-                .font(.subheadline)
+                .font(TempoFont.rounded(.subheadline))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Start with")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(TempoFont.rounded(.subheadline, weight: .medium))
                     .foregroundStyle(.secondary)
                 Picker(selection: $engine.config.startPhase) {
                     Text("Eccentric").tag(StartPhase.eccentric)
@@ -161,19 +167,19 @@ struct SetupView: View {
                 .sensoryFeedback(.selection, trigger: engine.config.startPhase)
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .frame(minWidth: 280)
         .presentationCompactAdaptation(.popover)
     }
 
     private var presetsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(verbatim: presetsHeaderText)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(TempoFont.rounded(.caption, weight: .semibold))
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: Spacing.sm) {
                     ForEach(displayedBuiltInPresets) { preset in
                         PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
                             apply(preset)
@@ -197,11 +203,12 @@ struct SetupView: View {
                         showSavePresetAlert = true
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 44, height: 44)
+                            .font(TempoFont.rounded(.subheadline, weight: .bold))
+                            .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     }
-                    .background(Color.white.opacity(0.1), in: Circle())
+                    .background(Color.tempoSurfaceRaised, in: Circle())
                     .foregroundStyle(Color.accentColor)
+                    .accessibilityLabel(Text("Save current settings as a preset"))
                 }
             }
         }
@@ -257,17 +264,17 @@ struct SetupView: View {
     }
 
     private var countersSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Spacing.sm) {
             CounterRow(title: "Reps per set", value: $engine.config.repsPerSet, range: 1...30)
             CounterRow(title: "Sets", value: $engine.config.sets, range: 1...10)
             CounterRow(title: "Rest between sets", value: $engine.config.restSeconds, range: 15...300, step: 15, unit: " s")
         }
-        .padding(20)
-        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+        .padding(Spacing.xl)
+        .background(Color.tempoSurface, in: RoundedRectangle(cornerRadius: CornerRadius.lg))
     }
 
     private var unilateralSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.lg) {
             Picker(selection: $engine.config.unilateral) {
                 Text("Bilateral").tag(false)
                 Text("Unilateral").tag(true)
@@ -282,7 +289,7 @@ struct SetupView: View {
 
                 HStack {
                     Text("Starting side")
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .font(TempoFont.rounded(.body, weight: .medium))
                     Spacer()
                     Picker(selection: $engine.config.startingSide) {
                         ForEach(Side.allCases) { side in
@@ -297,16 +304,16 @@ struct SetupView: View {
                 }
             }
         }
-        .padding(20)
-        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
-        .animation(.easeInOut(duration: 0.2), value: engine.config.unilateral)
+        .padding(Spacing.xl)
+        .background(Color.tempoSurface, in: RoundedRectangle(cornerRadius: CornerRadius.lg))
+        .animation(TempoAnimation.standard(reduceMotion: reduceMotion), value: engine.config.unilateral)
     }
 
     private var estimateSection: some View {
         let duration = formatDuration(WorkoutEngine.estimatedDuration(for: engine.config))
         let text = String(format: L("≈ %@ total", locale), duration)
         return Text(verbatim: text)
-            .font(.system(size: 15, weight: .medium, design: .rounded))
+            .font(TempoFont.rounded(.subheadline, weight: .medium))
             .foregroundStyle(.secondary)
     }
 
@@ -316,17 +323,20 @@ struct SetupView: View {
             engine.start()
         } label: {
             Text("START")
-                .font(.system(size: 24, weight: .heavy, design: .rounded))
+                .font(TempoFont.rounded(.title2, weight: .heavy))
                 .tracking(3)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(.vertical, Spacing.xl)
         }
         .background(Color.accentColor, in: Capsule())
+        // Fixed black, not `.primaryText` — the accent is a bright, fixed
+        // color in both appearances, so black keeps full contrast on it
+        // regardless of light/dark mode.
         .foregroundStyle(.black)
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-        .background(Color.black)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.top, Spacing.sm)
+        .padding(.bottom, Spacing.sm)
+        .background(Color.tempoBackground)
     }
 
     private func formatDuration(_ interval: TimeInterval) -> String {
@@ -344,59 +354,80 @@ private struct PresetChip: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: Spacing.xs) {
                 Text(verbatim: displayName)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(TempoFont.rounded(.caption, weight: .bold))
                     .lineLimit(1)
                 Text(verbatim: tempoDigits.map(String.init).joined())
-                    .font(.system(size: 11, weight: .medium, design: .rounded).monospacedDigit())
+                    .font(TempoFont.rounded(.caption2, weight: .medium).monospacedDigit())
                     .opacity(0.7)
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.md)
         }
-        .background(Color.white.opacity(0.1), in: Capsule())
-        .foregroundStyle(.white)
+        .background(Color.tempoSurfaceRaised, in: Capsule())
+        .foregroundStyle(.primary)
     }
 }
 
 private struct DigitStepper: View {
     let label: LocalizedStringKey
+    let accessibilityName: LocalizedStringKey
     @Binding var digit: Int
     @Environment(\.locale) private var locale
+    @ScaledMetric(relativeTo: .largeTitle) private var digitSize = TempoMetrics.Display.digit
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: Spacing.md) {
             Button {
-                digit = min(9, digit + 1)
+                increment()
             } label: {
                 Image(systemName: "chevron.up")
                     .font(.system(size: 18, weight: .bold))
-                    .frame(width: 44, height: 32)
+                    .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
+            .accessibilityHidden(true)
 
             Text(verbatim: digit.formatted(.number.locale(locale)))
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.system(size: digitSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .frame(width: 56, height: 60)
-                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                .background(Color.tempoSurfaceRaised, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
 
             Button {
-                digit = max(0, digit - 1)
+                decrement()
             } label: {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 18, weight: .bold))
-                    .frame(width: 44, height: 32)
+                    .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
+            .accessibilityHidden(true)
 
             Text(label)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(TempoFont.rounded(.caption2, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
         .sensoryFeedback(.selection, trigger: digit)
+        // A native Stepper presents to VoiceOver as one adjustable element
+        // (swipe up/down to change the value) rather than two separately
+        // unlabeled +/- buttons — this matches that, since 4 of these sit
+        // side by side and "chevron up, button" x4 is meaningless on its own.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(accessibilityName))
+        .accessibilityValue(Text(verbatim: "\(digit)"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: increment()
+            case .decrement: decrement()
+            @unknown default: break
+            }
+        }
     }
+
+    private func increment() { digit = min(9, digit + 1) }
+    private func decrement() { digit = max(0, digit - 1) }
 }
 
 private struct CounterRow: View {
@@ -408,40 +439,54 @@ private struct CounterRow: View {
     @Environment(\.locale) private var locale
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Spacing.md) {
             Text(title)
-                .font(.system(size: 17, weight: .medium, design: .rounded))
+                .font(TempoFont.rounded(.body, weight: .medium))
             Spacer()
             Button {
-                value = max(range.lowerBound, value - step)
+                decrement()
             } label: {
                 Image(systemName: "minus")
                     .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.1), in: Circle())
+                    .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
+                    .background(Color.tempoSurfaceRaised, in: Circle())
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
+            .accessibilityHidden(true)
 
             Text(verbatim: "\(value.formatted(.number.locale(locale)))\(unit)")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(TempoFont.rounded(.title3, weight: .bold))
                 .monospacedDigit()
                 .frame(minWidth: 64)
 
             Button {
-                value = min(range.upperBound, value + step)
+                increment()
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.1), in: Circle())
+                    .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
+                    .background(Color.tempoSurfaceRaised, in: Circle())
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
+            .accessibilityHidden(true)
         }
         .sensoryFeedback(.selection, trigger: value)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(verbatim: "\(value)\(unit)"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: increment()
+            case .decrement: decrement()
+            @unknown default: break
+            }
+        }
     }
+
+    private func increment() { value = min(range.upperBound, value + step) }
+    private func decrement() { value = max(range.lowerBound, value - step) }
 }
 
 #Preview {
     SetupView(engine: WorkoutEngine())
-        .preferredColorScheme(.dark)
 }
