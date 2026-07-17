@@ -8,6 +8,7 @@ struct SetupView: View {
     @State private var showExercisePicker = false
     @State private var showSavePresetAlert = false
     @State private var newPresetName = ""
+    @State private var showTempoInfo = false
     private let exerciseDatabase = ExerciseDatabase.shared
 
     var body: some View {
@@ -28,8 +29,7 @@ struct SetupView: View {
 
                     exerciseSection
                     tempoSection
-                    presetSection
-                    customPresetsSection
+                    presetsSection
                     countersSection
                     unilateralSection
                     estimateSection
@@ -111,16 +111,33 @@ struct SetupView: View {
                 DigitStepper(label: "PAUSE", digit: $engine.config.tempoDigits[1])
                 DigitStepper(label: "CON", digit: $engine.config.tempoDigits[2])
                 DigitStepper(label: "PAUSE", digit: $engine.config.tempoDigits[3])
-            }
-            Text("Concentric 0 = explosive (timed as 1 s)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
-            HStack {
-                Text("Starts with")
+                Button {
+                    showTempoInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel(Text("Tempo details"))
+                .popover(isPresented: $showTempoInfo) {
+                    tempoInfoPopover
+                }
+            }
+        }
+    }
+
+    private var tempoInfoPopover: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Concentric 0 = explosive (timed as 1 s)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Start with")
                     .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
-                Spacer()
                 Picker(selection: $engine.config.startPhase) {
                     Text("Eccentric").tag(StartPhase.eccentric)
                     Text("Concentric").tag(StartPhase.concentric)
@@ -128,32 +145,26 @@ struct SetupView: View {
                     EmptyView()
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 200)
-            }
-            .padding(.top, 4)
-        }
-    }
-
-    private var presetSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(WorkoutPreset.builtIn) { preset in
-                    PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
-                        apply(preset)
-                    }
-                }
             }
         }
+        .padding(20)
+        .frame(minWidth: 280)
+        .presentationCompactAdaptation(.popover)
     }
 
-    private var customPresetsSection: some View {
+    private var presetsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("My Presets")
+            Text("Presets")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
+                    ForEach(WorkoutPreset.builtIn) { preset in
+                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
+                            apply(preset)
+                        }
+                    }
                     ForEach(engine.presets.custom) { preset in
                         PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
                             apply(preset)

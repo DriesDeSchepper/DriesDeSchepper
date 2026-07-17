@@ -22,7 +22,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
 - Bundled exercise database (873 exercises from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db), no network calls): searchable picker with muscle/equipment filters and a recents list; picking an exercise suggests unilateral mode and starting phase (deadlifts/pull-ups lead with the concentric phase) — or skip it and run a bare timer
-- 4 built-in presets (Squat, Push-Up, Single-Leg RDL, Deadlift) that set exercise + tempo + reps + sets + rest + unilateral settings all at once, plus save your own under "My Presets" (long-press to delete)
+- Presets (4 built-in — Squat, Push-Up, Single-Leg RDL, Deadlift — plus any you save) set exercise + tempo + reps + sets + rest + unilateral settings all at once; long-press a saved one to delete it
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
