@@ -19,7 +19,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Distinct sound + haptic cues for phase changes, rep completion, and set completion
 - Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
-- Optional voice countdown (toggle in Settings): spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language
+- Optional voice countdown (toggle in Settings): spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language by default, or a specific installed voice picked in Settings (with an instant spoken preview, and each language remembering its own choice)
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
 - Bundled exercise database (873 exercises from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db), no network calls): searchable picker with a filter sheet (muscle/equipment), a favorites star per exercise, and a recents list; picking an exercise suggests unilateral mode, starting phase (deadlifts/pull-ups lead with the concentric phase), and a starting tempo for its primary muscle group (e.g. slower eccentric + explosive concentric for calves/arms) — always shown as an overridable suggestion, never applied silently once you've changed the digits yourself; or skip it and run a bare timer
@@ -76,6 +76,7 @@ TempoRep/
   Engine/WorkoutEngine.swift  Elapsed-time-driven workout state machine
   Services/SoundPlayer.swift  Synthesized beep cues via AVFoundation
   Services/SpeechPlayer.swift  Voice cues via AVSpeechSynthesizer
+  Services/VoicePreferenceStore.swift  Per-language chosen speech voice, persisted
   Services/HapticsPlayer.swift  UIKit feedback generators
   Services/HistoryStore.swift  Persisted log of completed workouts
   Services/LocalizationManager.swift  System-language / override language resolution
@@ -85,7 +86,7 @@ TempoRep/
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
   Views/WorkoutView.swift     In-workout display and controls
   Views/HistoryView.swift     Workout history sheet
-  Views/SettingsView.swift    Language override, voice countdown toggle
+  Views/SettingsView.swift    Language override, voice countdown toggle, per-language speech voice picker
   Views/ExercisePickerView.swift  Searchable exercise picker
   Resources/exercises.json    Bundled exercise dataset (name/category/muscles/equipment, no images)
   Localizable.xcstrings       String catalog (en, nl, fr, de)
@@ -97,6 +98,7 @@ TempoRepTests/
   WorkoutPresetTests.swift    Preset application and persistence shape
   ExerciseDatabaseTests.swift  Bundled dataset loads correctly, no duplicate IDs
   LocalizationCatalogTests.swift  Every checked key resolves in all 4 languages
+  VoicePreferenceStoreTests.swift  Per-language voice override persistence and lookup
 
 fastlane/metadata/           App Store listing text (name/subtitle/description/keywords) in en-US/nl-NL/fr-FR/de-DE
 PRIVACY_POLICY.md            Ready-to-host privacy policy draft

@@ -1,11 +1,13 @@
 import AVFoundation
 
 /// Speaks short workout cues ("Down", "Hold", "Up", rep numbers, countdowns)
-/// via AVSpeechSynthesizer, using a voice that matches the current language.
-/// Uses the app's shared audio session, so speech mixes over the user's
-/// music just like the beep cues. Plain digit strings (e.g. "3") are spoken
-/// correctly in the target language by the voice itself — no per-language
-/// number spelling is needed.
+/// via AVSpeechSynthesizer, using a voice that matches the current language
+/// — the user's chosen voice for that language (Settings), if any, else
+/// whatever iOS considers the default. Uses the app's shared audio session,
+/// so speech mixes over the user's music just like the beep cues. Plain
+/// digit strings (e.g. "3") are spoken correctly in the target language by
+/// the voice itself — no per-language number spelling is needed.
+@MainActor
 final class SpeechPlayer {
     private let synthesizer = AVSpeechSynthesizer()
     private var voiceCache: [String: AVSpeechSynthesisVoice] = [:]
@@ -25,6 +27,10 @@ final class SpeechPlayer {
     }
 
     private func voice(for languageCode: String) -> AVSpeechSynthesisVoice? {
+        if let identifier = VoicePreferenceStore.shared.voiceIdentifier(for: languageCode),
+           let chosen = AVSpeechSynthesisVoice(identifier: identifier) {
+            return chosen
+        }
         if let cached = voiceCache[languageCode] { return cached }
         let voice = AVSpeechSynthesisVoice(language: languageCode)
         voiceCache[languageCode] = voice

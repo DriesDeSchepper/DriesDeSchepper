@@ -92,6 +92,12 @@ final class WorkoutEngine {
         state = .idle
     }
 
+    /// Speaks a short sample outside of a workout, so Settings can let the
+    /// user hear a candidate voice before committing to it.
+    func previewVoice(languageCode: String, sampleText: String) {
+        speech.speak(sampleText, languageCode: languageCode)
+    }
+
     // MARK: - Timeline
 
     static func buildTimeline(for config: WorkoutConfig) -> [Segment] {
