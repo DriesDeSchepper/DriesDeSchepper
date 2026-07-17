@@ -17,6 +17,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Reps per set, number of sets, rest between sets
 - Huge phase name + countdown ring, readable from across the room
 - Distinct sound + haptic cues for phase changes, rep completion, and set completion
+- Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
 - Optional voice countdown: spoken "Down / Hold / Up" per language, counted per second through multi-second phases (e.g. "Down, 2, 3, 4" for a 4s eccentric), "Rest", and a 3-2-1 lead-in before each set — uses a matching AVSpeechSynthesisVoice for the current language
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside

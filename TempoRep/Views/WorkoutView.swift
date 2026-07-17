@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct WorkoutView: View {
     let engine: WorkoutEngine
@@ -88,6 +89,7 @@ struct WorkoutView: View {
     private var controls: some View {
         HStack(spacing: 16) {
             Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 if engine.state == .paused {
                     engine.resume()
                 } else {
@@ -104,6 +106,7 @@ struct WorkoutView: View {
             .foregroundStyle(.black)
 
             Button {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 engine.stop()
             } label: {
                 Label("Stop", systemImage: "stop.fill")
@@ -157,6 +160,7 @@ struct WorkoutView: View {
             Spacer()
 
             Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 engine.stop()
             } label: {
                 Text("workout.continueButton")

@@ -22,6 +22,7 @@ struct SettingsView: View {
                     } label: {
                         Text("Language")
                     }
+                    .sensoryFeedback(.selection, trigger: localization.override)
                 } header: {
                     Text("Language")
                 }

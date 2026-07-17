@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct SetupView: View {
     @Bindable var engine: WorkoutEngine
@@ -137,6 +138,7 @@ struct SetupView: View {
                     EmptyView()
                 }
                 .pickerStyle(.segmented)
+                .sensoryFeedback(.selection, trigger: engine.config.startPhase)
             }
         }
         .padding(20)
@@ -190,11 +192,13 @@ struct SetupView: View {
                 let trimmed = newPresetName.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !trimmed.isEmpty else { return }
                 engine.presets.save(name: trimmed, from: engine.config)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
             }
         }
     }
 
     private func apply(_ preset: WorkoutPreset) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         preset.apply(to: &engine.config)
         if let exercise = exerciseDatabase.exercise(id: preset.exerciseID) {
             exerciseDatabase.markUsed(exercise)
@@ -213,6 +217,7 @@ struct SetupView: View {
                 Toggle("Voice countdown", isOn: $engine.config.voiceCues)
                     .labelsHidden()
                     .tint(Color.accentColor)
+                    .sensoryFeedback(.selection, trigger: engine.config.voiceCues)
             }
             .padding(.vertical, 4)
         }
@@ -229,6 +234,7 @@ struct SetupView: View {
                 EmptyView()
             }
             .pickerStyle(.segmented)
+            .sensoryFeedback(.selection, trigger: engine.config.unilateral)
 
             if engine.config.unilateral {
                 CounterRow(title: "Switch time", value: $engine.config.switchSeconds, range: 0...60, step: 5, unit: " s")
@@ -246,6 +252,7 @@ struct SetupView: View {
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 160)
+                    .sensoryFeedback(.selection, trigger: engine.config.startingSide)
                 }
             }
         }
@@ -264,6 +271,7 @@ struct SetupView: View {
 
     private var startButton: some View {
         Button {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             engine.start()
         } label: {
             Text("START")
@@ -346,6 +354,7 @@ private struct DigitStepper: View {
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
         }
+        .sensoryFeedback(.selection, trigger: digit)
     }
 }
 
@@ -387,6 +396,7 @@ private struct CounterRow: View {
             }
             .foregroundStyle(.white)
         }
+        .sensoryFeedback(.selection, trigger: value)
     }
 }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ExercisePickerView: View {
     @Bindable var engine: WorkoutEngine
@@ -16,6 +17,7 @@ struct ExercisePickerView: View {
                     if engine.config.selectedExerciseID != nil {
                         Section {
                             Button(role: .destructive) {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 engine.config.selectedExerciseID = nil
                                 dismiss()
                             } label: {
@@ -106,6 +108,7 @@ struct ExercisePickerView: View {
     }
 
     private func select(_ exercise: Exercise) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         engine.config.selectedExerciseID = exercise.id
         if exercise.isUnilateral {
             engine.config.unilateral = true
