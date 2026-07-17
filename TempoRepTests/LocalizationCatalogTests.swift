@@ -27,6 +27,8 @@ struct LocalizationCatalogTests {
             L("Cancel", locale),
             L("Save", locale),
             L("Delete", locale),
+            L("Voice", locale),
+            L("Voice countdown", locale),
             L("phase.getReady.title", locale),
             L("phase.eccentric.voice", locale),
             L("phase.pause.voice", locale),

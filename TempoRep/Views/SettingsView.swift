@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Bindable var engine: WorkoutEngine
     @Environment(\.dismiss) private var dismiss
     private let localization = LocalizationManager.shared
 
@@ -27,6 +28,15 @@ struct SettingsView: View {
                     Text("Language")
                 }
                 .listRowBackground(Color.white.opacity(0.06))
+
+                Section {
+                    Toggle("Voice countdown", isOn: $engine.config.voiceCues)
+                        .tint(Color.accentColor)
+                        .sensoryFeedback(.selection, trigger: engine.config.voiceCues)
+                } header: {
+                    Text("Voice")
+                }
+                .listRowBackground(Color.white.opacity(0.06))
             }
             .scrollContentBackground(.hidden)
             .background(Color.black)
@@ -45,6 +55,6 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(engine: WorkoutEngine())
         .preferredColorScheme(.dark)
 }
