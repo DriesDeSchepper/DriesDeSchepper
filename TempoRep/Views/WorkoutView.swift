@@ -185,8 +185,14 @@ struct WorkoutView: View {
         return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(engine.config.tempoString)"
     }
 
+    /// Under a minute, "0:15" reads ambiguously — spell out the unit
+    /// instead. Once there's an actual minutes component, m:ss is
+    /// unambiguous on its own.
     private static func mmss(_ interval: TimeInterval) -> String {
         let seconds = Int(interval.rounded())
+        if seconds < 60 {
+            return "\(seconds)s"
+        }
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 

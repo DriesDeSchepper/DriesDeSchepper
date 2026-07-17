@@ -72,6 +72,11 @@ enum Side: String, Codable, CaseIterable, Identifiable {
 struct WorkoutRecord: Identifiable, Codable {
     let id: UUID
     let date: Date
+    /// The exercise's name at the time of the workout (denormalized, not an
+    /// ID lookup) so history stays accurate even if the bundled dataset
+    /// ever changes. Optional and defaults to nil when decoding older
+    /// records saved before this field existed.
+    let exerciseName: String?
     let tempoDigits: [Int]
     let sets: Int
     let repsPerSet: Int

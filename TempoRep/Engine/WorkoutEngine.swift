@@ -248,6 +248,7 @@ final class WorkoutEngine {
         history.add(WorkoutRecord(
             id: UUID(),
             date: Date(),
+            exerciseName: ExerciseDatabase.shared.exercise(id: config.selectedExerciseID)?.name,
             tempoDigits: config.tempoDigits,
             sets: config.sets,
             repsPerSet: config.repsPerSet,

@@ -26,7 +26,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
-- Workout history: finished workouts are logged with tempo, sets × reps, and time under tension
+- Workout history: finished workouts are logged with exercise (if one was picked), tempo, sets × reps, and time under tension (shown as "15s" under a minute, "1:30" once it isn't, to avoid an ambiguous bare "0:15")
 - Finish screen shows a checkmark animation, correctly-pluralized sets/reps ("1 rep", not "1 reps"), and time under tension for that workout
 - Screen stays awake during a workout
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks

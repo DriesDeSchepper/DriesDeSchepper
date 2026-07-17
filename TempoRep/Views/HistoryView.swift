@@ -62,6 +62,12 @@ struct HistoryView: View {
     private func row(for record: WorkoutRecord) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
+                if let exerciseName = record.exerciseName {
+                    Text(verbatim: exerciseName)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                }
                 HStack(spacing: 8) {
                     Text(record.tempoString)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -78,7 +84,7 @@ struct HistoryView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text(Self.mmss(record.timeUnderTension))
+                Text(Self.formatTimeUnderTension(record.timeUnderTension))
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .monospacedDigit()
                 Text("under tension")
@@ -89,8 +95,14 @@ struct HistoryView: View {
         .padding(.vertical, 4)
     }
 
-    private static func mmss(_ interval: TimeInterval) -> String {
+    /// Under a minute, "0:15" reads ambiguously (seconds? minutes?) — spell
+    /// out the unit instead. Once there's an actual minutes component, m:ss
+    /// is unambiguous on its own.
+    private static func formatTimeUnderTension(_ interval: TimeInterval) -> String {
         let seconds = Int(interval.rounded())
+        if seconds < 60 {
+            return "\(seconds)s"
+        }
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 }
