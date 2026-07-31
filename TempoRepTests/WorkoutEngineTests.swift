@@ -20,6 +20,17 @@ struct WorkoutEngineTests {
         #expect(timeline.allSatisfy { $0.duration > 0 })
     }
 
+    @Test func halfSecondTempoValuesProduceMatchingSegmentDurations() {
+        var config = WorkoutConfig()
+        config.tempoDigits = [3, 0, 1.5, 0]
+        config.repsPerSet = 1
+        config.sets = 1
+
+        let timeline = WorkoutEngine.buildTimeline(for: config)
+        #expect(timeline.first { $0.phase == .eccentric }?.duration == 3)
+        #expect(timeline.first { $0.phase == .concentric }?.duration == 1.5)
+    }
+
     @Test func zeroDurationPhasesAreSkipped() {
         var config = WorkoutConfig()
         config.tempoDigits = [4, 0, 0, 0]

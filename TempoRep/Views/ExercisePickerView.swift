@@ -115,7 +115,7 @@ struct ExercisePickerView: View {
             } label: {
                 Image(systemName: database.isFavorite(exercise) ? "star.fill" : "star")
                     .font(TempoFont.rounded(.body))
-                    .foregroundStyle(database.isFavorite(exercise) ? .yellow : .secondary)
+                    .foregroundStyle(database.isFavorite(exercise) ? AnyShapeStyle(Color.tempoFavorite) : AnyShapeStyle(.secondary))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
             }
             .buttonStyle(.plain)

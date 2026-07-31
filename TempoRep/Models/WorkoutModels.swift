@@ -1,5 +1,40 @@
 import Foundation
 
+/// A single tempo value formatted without a pointless trailing ".0" —
+/// whole seconds read as "4", half-seconds as "1.5".
+private func formatTempoValue(_ value: Double) -> String {
+    value.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(value)) : String(value)
+}
+
+/// Tempo digits formatted with direction arrows and dot separators
+/// (e.g. "↓4·0·↑1·0") instead of a bare joined string — clearer at a
+/// glance about which number is eccentric (lowering) vs. concentric
+/// (lifting). Digits and separators are locale-independent (plain
+/// numerals and symbols), so this doesn't go through the string catalog.
+///
+/// `reversed` swaps which arrow marks which phase: for exercises where
+/// the physical motion isn't visually "eccentric = down" (a lat pulldown
+/// or leg curl contracts by moving *down*), reversing lets the arrows
+/// still match what the lifter actually sees. It never changes which
+/// digit means what — only which glyph is drawn next to it.
+func tempoNotation(_ digits: [Double], reversed: Bool = false) -> String {
+    guard digits.count == 4 else { return digits.map(formatTempoValue).joined() }
+    let (eccArrow, conArrow) = reversed ? ("↑", "↓") : ("↓", "↑")
+    let values = digits.map(formatTempoValue)
+    return "\(eccArrow)\(values[0])·\(values[1])·\(conArrow)\(values[2])·\(values[3])"
+}
+
+/// A VoiceOver-friendly reading of tempo digits ("4-0-1-0", or "1.5-0-1-0"
+/// with a half-second value) — the arrow/dot symbols in `tempoNotation`
+/// aren't reliably spoken by VoiceOver, so anywhere that notation is shown
+/// as text supplies this instead via an explicit accessibility label.
+/// Direction-agnostic on purpose: VoiceOver users get the plain digit
+/// sequence regardless of `reversed`, same as sighted users would get the
+/// same 4 numbers regardless of which way the arrows point.
+func tempoAccessibilityReading(_ digits: [Double]) -> String {
+    digits.map(formatTempoValue).joined(separator: "-")
+}
+
 /// Which phase a rep's tempo sequence leads with. Most lifts lower first
 /// (eccentric); a few — deadlifts, pull-ups — start by lifting from a dead
 /// stop, so their tempo sequence leads with the concentric phase instead.
@@ -13,8 +48,9 @@ enum StartPhase: String, Codable {
 
 /// User-configurable workout parameters.
 struct WorkoutConfig: Equatable, Codable {
-    /// Tempo digits: [eccentric, pause at bottom, concentric, pause at top].
-    var tempoDigits: [Int] = [4, 0, 1, 0]
+    /// Tempo digits, in seconds: [eccentric, pause at bottom, concentric,
+    /// pause at top]. Supports half-second steps (e.g. 1.5).
+    var tempoDigits: [Double] = [4, 0, 1, 0]
     var repsPerSet: Int = 8
     var sets: Int = 3
     var restSeconds: Int = 90
@@ -24,14 +60,46 @@ struct WorkoutConfig: Equatable, Codable {
     var switchSeconds: Int = 10
     var startingSide: Side = .left
     var startPhase: StartPhase = .eccentric
+    /// Swaps which arrow/voice-word marks eccentric vs. concentric, for
+    /// exercises where the physical motion runs the "other way" visually
+    /// (lat pulldowns, leg curls). Doesn't affect timing at all — see
+    /// `tempoNotation(_:reversed:)` and `Phase.voiceWord(_:reversed:)`.
+    var reverseDirection: Bool = false
     /// ID into the bundled exercise database (Resources/exercises.json); nil
     /// runs a bare timer with no exercise attached.
     var selectedExerciseID: String?
 
     /// A concentric digit of 0 means "explosive" — timed as 1 second.
-    var concentricSeconds: Int { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
+    var concentricSeconds: Double { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
 
-    var tempoString: String { tempoDigits.map(String.init).joined() }
+    var tempoString: String { tempoNotation(tempoDigits, reversed: reverseDirection) }
+
+    // MARK: - Codable
+
+    init() {}
+
+    /// Hand-written rather than synthesized: Swift's synthesized decoding
+    /// *ignores* a property's default value and hard-fails on a missing
+    /// key, so adding any new field would make every previously-saved
+    /// config fail to decode — silently resetting the user's settings,
+    /// since `loadSaved()` swallows the error. Decoding each field with
+    /// `decodeIfPresent` and falling back to the declared default keeps
+    /// old saved data readable across schema changes.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = WorkoutConfig()
+        tempoDigits = try container.decodeIfPresent([Double].self, forKey: .tempoDigits) ?? defaults.tempoDigits
+        repsPerSet = try container.decodeIfPresent(Int.self, forKey: .repsPerSet) ?? defaults.repsPerSet
+        sets = try container.decodeIfPresent(Int.self, forKey: .sets) ?? defaults.sets
+        restSeconds = try container.decodeIfPresent(Int.self, forKey: .restSeconds) ?? defaults.restSeconds
+        voiceCues = try container.decodeIfPresent(Bool.self, forKey: .voiceCues) ?? defaults.voiceCues
+        unilateral = try container.decodeIfPresent(Bool.self, forKey: .unilateral) ?? defaults.unilateral
+        switchSeconds = try container.decodeIfPresent(Int.self, forKey: .switchSeconds) ?? defaults.switchSeconds
+        startingSide = try container.decodeIfPresent(Side.self, forKey: .startingSide) ?? defaults.startingSide
+        startPhase = try container.decodeIfPresent(StartPhase.self, forKey: .startPhase) ?? defaults.startPhase
+        reverseDirection = try container.decodeIfPresent(Bool.self, forKey: .reverseDirection) ?? defaults.reverseDirection
+        selectedExerciseID = try container.decodeIfPresent(String.self, forKey: .selectedExerciseID)
+    }
 
     // MARK: - Persistence
 
@@ -77,7 +145,7 @@ struct WorkoutRecord: Identifiable, Codable {
     /// ever changes. Optional and defaults to nil when decoding older
     /// records saved before this field existed.
     let exerciseName: String?
-    let tempoDigits: [Int]
+    let tempoDigits: [Double]
     let sets: Int
     let repsPerSet: Int
     let restSeconds: Int
@@ -85,7 +153,7 @@ struct WorkoutRecord: Identifiable, Codable {
     let timeUnderTension: TimeInterval
     let totalDuration: TimeInterval
 
-    var tempoString: String { tempoDigits.map(String.init).joined() }
+    var tempoString: String { tempoNotation(tempoDigits) }
 }
 
 enum Phase: Equatable {
@@ -136,6 +204,20 @@ enum Phase: Equatable {
         case .rest: return L("phase.rest.voice", locale)
         case .switchSides: return L("phase.switchSides.voice", locale)
         case .done: return L("phase.done.voice", locale)
+        }
+    }
+
+    /// `voiceWord(_:)`, honoring `reverseDirection` — when the physical
+    /// motion runs "the other way" (a lat pulldown's concentric phase
+    /// pulls *down*), the spoken word should match what the lifter is
+    /// actually doing, not just the phase's usual label. Only eccentric
+    /// and concentric ever swap; every other phase is direction-neutral.
+    func voiceWord(_ locale: Locale, reversed: Bool) -> String {
+        guard reversed else { return voiceWord(locale) }
+        switch self {
+        case .eccentric: return Phase.concentric.voiceWord(locale)
+        case .concentric: return Phase.eccentric.voiceWord(locale)
+        default: return voiceWord(locale)
         }
     }
 }

@@ -10,7 +10,7 @@ struct SetupView: View {
     @State private var showExercisePicker = false
     @State private var showSavePresetAlert = false
     @State private var newPresetName = ""
-    @State private var showTempoInfo = false
+    @State private var showCustomTempo = false
     private let exerciseDatabase = ExerciseDatabase.shared
 
     var body: some View {
@@ -104,15 +104,15 @@ struct SetupView: View {
             HStack {
                 Spacer()
                 Button {
-                    showTempoInfo = true
+                    showCustomTempo = true
                 } label: {
                     Image(systemName: "info.circle")
                         .font(TempoFont.rounded(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityLabel(Text("Tempo details"))
-                .popover(isPresented: $showTempoInfo) {
-                    tempoInfoPopover
+                .sheet(isPresented: $showCustomTempo) {
+                    CustomTempoView(engine: engine)
                 }
             }
 
@@ -150,32 +150,6 @@ struct SetupView: View {
         return String(format: L("Suggested for %@", locale), muscle.capitalized)
     }
 
-    private var tempoInfoPopover: some View {
-        VStack(alignment: .leading, spacing: Spacing.xl) {
-            Text("Concentric 0 = explosive (timed as 1 s)")
-                .font(TempoFont.rounded(.subheadline))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Start with")
-                    .font(TempoFont.rounded(.subheadline, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Picker(selection: $engine.config.startPhase) {
-                    Text("Eccentric").tag(StartPhase.eccentric)
-                    Text("Concentric").tag(StartPhase.concentric)
-                } label: {
-                    EmptyView()
-                }
-                .pickerStyle(.segmented)
-                .sensoryFeedback(.selection, trigger: engine.config.startPhase)
-            }
-        }
-        .padding(Spacing.xl)
-        .frame(minWidth: 280)
-        .presentationCompactAdaptation(.popover)
-    }
-
     private var presetsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(verbatim: presetsHeaderText)
@@ -185,12 +159,14 @@ struct SetupView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Spacing.sm) {
                     ForEach(displayedBuiltInPresets) { preset in
-                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
+                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits,
+                                   reversed: preset.reverseDirection, isRecommended: isRecommended(preset)) {
                             apply(preset)
                         }
                     }
                     ForEach(displayedCustomPresets) { preset in
-                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits) {
+                        PresetChip(displayName: preset.displayName, tempoDigits: preset.tempoDigits,
+                                   reversed: preset.reverseDirection, isRecommended: isRecommended(preset)) {
                             apply(preset)
                         }
                         .contextMenu {
@@ -267,6 +243,14 @@ struct SetupView: View {
         }
     }
 
+    /// True when this preset's tempo matches the selected exercise's own
+    /// suggested tempo (see `Exercise.suggestedTempo`) — surfaces something
+    /// already computed rather than adding a separate curated list.
+    private func isRecommended(_ preset: WorkoutPreset) -> Bool {
+        guard let suggested = selectedExercise?.suggestedTempo else { return false }
+        return preset.tempoDigits == suggested
+    }
+
     private var countersSection: some View {
         VStack(spacing: Spacing.sm) {
             CounterRow(title: "Reps per set", value: $engine.config.repsPerSet, range: 1...30)
@@ -303,7 +287,7 @@ struct SetupView: View {
                         EmptyView()
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 160)
+                    .frame(width: TempoMetrics.sidePickerWidth)
                     .sensoryFeedback(.selection, trigger: engine.config.startingSide)
                 }
             }
@@ -328,15 +312,12 @@ struct SetupView: View {
         } label: {
             Text("START")
                 .font(TempoFont.rounded(.title2, weight: .heavy))
-                .tracking(3)
+                .tracking(TempoTracking.button)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.xl)
         }
         .background(Color.accentColor, in: Capsule())
-        // Fixed black, not `.primaryText` — checked against both of
-        // AccentColor's light/dark variants (see Assets.xcassets), black
-        // clears WCAG AA contrast on either one.
-        .foregroundStyle(.black)
+        .foregroundStyle(Color.tempoOnAccent)
         .padding(.horizontal, Spacing.xl)
         .padding(.top, Spacing.sm)
         .padding(.bottom, Spacing.sm)
@@ -355,31 +336,45 @@ struct SetupView: View {
 
 private struct PresetChip: View {
     let displayName: String
-    let tempoDigits: [Int]
+    let tempoDigits: [Double]
+    var reversed: Bool = false
+    var isRecommended: Bool = false
     let action: () -> Void
+    @Environment(\.locale) private var locale
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: Spacing.xs) {
+                if isRecommended {
+                    Text("Recommended")
+                        .font(TempoFont.rounded(.caption2, weight: .bold))
+                        .foregroundStyle(Color.accentColor)
+                }
                 Text(verbatim: displayName)
                     .font(TempoFont.rounded(.caption, weight: .bold))
                     .lineLimit(1)
-                Text(verbatim: tempoDigits.map(String.init).joined())
+                Text(verbatim: tempoNotation(tempoDigits, reversed: reversed))
                     .font(TempoFont.rounded(.caption2, weight: .medium).monospacedDigit())
-                    .opacity(0.7)
+                    .opacity(TempoOpacity.secondaryDetail)
             }
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.md)
         }
         .background(Color.tempoSurfaceRaised, in: Capsule())
         .foregroundStyle(.primary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: [
+            displayName,
+            isRecommended ? L("Recommended", locale) : nil,
+            "\(L("Tempo", locale)) \(tempoAccessibilityReading(tempoDigits))",
+        ].compactMap { $0 }.joined(separator: ", ")))
     }
 }
 
 private struct DigitStepper: View {
     let label: LocalizedStringKey
     let accessibilityName: LocalizedStringKey
-    @Binding var digit: Int
+    @Binding var digit: Double
     @Environment(\.locale) private var locale
     @ScaledMetric(relativeTo: .largeTitle) private var digitSize = TempoMetrics.Display.digit
 
@@ -389,23 +384,25 @@ private struct DigitStepper: View {
                 increment()
             } label: {
                 Image(systemName: "chevron.up")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
             .accessibilityHidden(true)
 
-            Text(verbatim: digit.formatted(.number.locale(locale)))
+            Text(verbatim: digit.formatted(.number.locale(locale).precision(.fractionLength(0...1))))
                 .font(.system(size: digitSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
-                .frame(width: 56, height: 60)
+                .minimumScaleFactor(TempoScaleFactor.digit)
+                .lineLimit(1)
+                .frame(width: TempoMetrics.digitBoxWidth, height: TempoMetrics.digitBoxHeight)
                 .background(Color.tempoSurfaceRaised, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
 
             Button {
                 decrement()
             } label: {
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
@@ -432,8 +429,8 @@ private struct DigitStepper: View {
         }
     }
 
-    private func increment() { digit = min(9, digit + 1) }
-    private func decrement() { digit = max(0, digit - 1) }
+    private func increment() { digit = min(9, digit + 0.5) }
+    private func decrement() { digit = max(0, digit - 0.5) }
 }
 
 private struct CounterRow: View {
@@ -453,7 +450,7 @@ private struct CounterRow: View {
                 decrement()
             } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     .background(Color.tempoSurfaceRaised, in: Circle())
             }
@@ -463,13 +460,13 @@ private struct CounterRow: View {
             Text(verbatim: "\(value.formatted(.number.locale(locale)))\(unit)")
                 .font(TempoFont.rounded(.title3, weight: .bold))
                 .monospacedDigit()
-                .frame(minWidth: 64)
+                .frame(minWidth: TempoMetrics.counterValueMinWidth)
 
             Button {
                 increment()
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     .background(Color.tempoSurfaceRaised, in: Circle())
             }

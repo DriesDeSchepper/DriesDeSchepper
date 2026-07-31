@@ -29,7 +29,7 @@ struct Exercise: Identifiable, Codable, Hashable {
     /// hypertrophy tempo. Only offered for resistance-training categories —
     /// tempo manipulation isn't a meaningful concept for stretching,
     /// plyometrics, cardio, or Olympic lifts.
-    var suggestedTempo: [Int]? {
+    var suggestedTempo: [Double]? {
         guard category == "strength" || category == "powerlifting" else { return nil }
         guard let muscle = primaryMuscles.first else { return nil }
         switch muscle {
