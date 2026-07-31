@@ -36,7 +36,7 @@ Each value goes in half-second steps (0–9), so `↓3·0·↑1.5·0` is valid t
 - Screen stays awake during a workout
 - The workout screen supports landscape (phone propped on a shelf, in a stand, etc.) with an adapted side-by-side layout; every other screen stays portrait-only — see `OrientationLock.swift`
 - Settings, History, and the exercise picker are plain native `Form`/`List` sheets (system materials, resizable via `.presentationDetents`) with the system's standard round close button, not a text "Done"; they follow the system light/dark appearance, while the workout screen and launch splash are deliberately always dark (see `WorkoutView`'s doc comment)
-- Every color, font, spacing, corner-radius, and animation value in the UI comes from one design-system file (`DesignSystem.swift`) — semantic tokens, a 4/8/12/16/24/32 spacing scale, and Dynamic Type text styles throughout (the oversized workout-display digits scale via `@ScaledMetric` instead, since they're bigger than any standard text style)
+- Every color, font, spacing, corner-radius, stroke width, letter-spacing, opacity, and animation value in the UI comes from one design-token file (`DesignSystem.swift`) — semantic tokens, a 4/8/12/16/24/32 spacing scale, and Dynamic Type text styles throughout (the oversized workout-display digits scale via `@ScaledMetric` instead, since they're bigger than any standard text style). `Scripts/check-design-tokens.sh` fails CI if any screen hardcodes one of those values instead, so this stays true for screens added later
 - VoiceOver: tempo digit steppers and counters (reps/sets/rest/switch time) present as single adjustable elements with real labels, not unlabeled +/- buttons; the workout screen announces phase changes via `UIAccessibility.post` independent of the optional voice-cue feature; Reduce Motion replaces the finish-screen checkmark's pop-in with a plain crossfade
 - Drift-free timing: state is derived from wall-clock elapsed time, not accumulated timer ticks
 - Cues play even when the phone is on silent (`.playback` audio session category)
@@ -78,7 +78,7 @@ xcodebuild test -project TempoRep.xcodeproj -scheme TempoRep \
 ```
 TempoRep/
   TempoRepApp.swift              App entry point
-  DesignSystem.swift          Semantic color/spacing/typography/motion tokens — the only source of styling constants
+  DesignSystem.swift          THE design token file — every color, spacing, radius, size, typography, tracking, opacity and motion value; nothing else may hardcode these
   Models/WorkoutModels.swift  Config, phases, timeline segments
   Models/Exercise.swift       Bundled exercise-database entry
   Models/WorkoutPreset.swift  Built-in and user-saved exercise+settings presets
@@ -113,6 +113,7 @@ TempoRepTests/
   VoicePreferenceStoreTests.swift  Per-language voice override persistence and lookup
 
 fastlane/metadata/           App Store listing text (name/subtitle/description/keywords) in en-US/nl-NL/fr-FR/de-DE
+Scripts/check-design-tokens.sh  CI guard: fails if a screen hardcodes a design value instead of using a token
 PRIVACY_POLICY.md            Ready-to-host privacy policy draft
 APP_STORE_SUBMISSION.md      Checklist of what's done vs. what you still need to do before submitting
 UI_MODERNIZATION.md          Design-system audit, native-iOS-26 pass, and the Live Activity proposal

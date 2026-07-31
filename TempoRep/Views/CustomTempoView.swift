@@ -112,18 +112,18 @@ private struct PhaseRow: View {
                 decrement()
             } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.small, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
             }
             Text(verbatim: formattedValue)
                 .font(TempoFont.rounded(.body, weight: .bold))
                 .monospacedDigit()
-                .frame(width: 44)
+                .frame(width: TempoMetrics.stepperValueWidth)
             Button {
                 increment()
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.small, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
             }
         }

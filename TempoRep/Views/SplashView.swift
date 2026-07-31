@@ -16,8 +16,8 @@ struct SplashView: View {
             VStack(spacing: Spacing.lg) {
                 ZStack {
                     Circle()
-                        .stroke(Color.accentColor, lineWidth: 10)
-                        .frame(width: 96, height: 96)
+                        .stroke(Color.accentColor, lineWidth: TempoMetrics.splashLogoLineWidth)
+                        .frame(width: TempoMetrics.splashLogoDiameter, height: TempoMetrics.splashLogoDiameter)
                     Text(verbatim: "4")
                         .font(.system(size: digitSize, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color.tempoOnDark)
@@ -26,7 +26,7 @@ struct SplashView: View {
                 VStack(spacing: Spacing.xs) {
                     Text(verbatim: "TEMPOREP")
                         .font(.system(size: wordmarkSize, weight: .heavy, design: .rounded))
-                        .tracking(8)
+                        .tracking(TempoTracking.wordmark)
                         .foregroundStyle(Color.tempoOnDark)
                     Text("tempo training timer")
                         .font(TempoFont.rounded(.subheadline))

@@ -287,7 +287,7 @@ struct SetupView: View {
                         EmptyView()
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 160)
+                    .frame(width: TempoMetrics.sidePickerWidth)
                     .sensoryFeedback(.selection, trigger: engine.config.startingSide)
                 }
             }
@@ -312,15 +312,12 @@ struct SetupView: View {
         } label: {
             Text("START")
                 .font(TempoFont.rounded(.title2, weight: .heavy))
-                .tracking(3)
+                .tracking(TempoTracking.button)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.xl)
         }
         .background(Color.accentColor, in: Capsule())
-        // Fixed black, not `.primaryText` — checked against both of
-        // AccentColor's light/dark variants (see Assets.xcassets), black
-        // clears WCAG AA contrast on either one.
-        .foregroundStyle(.black)
+        .foregroundStyle(Color.tempoOnAccent)
         .padding(.horizontal, Spacing.xl)
         .padding(.top, Spacing.sm)
         .padding(.bottom, Spacing.sm)
@@ -358,7 +355,7 @@ private struct PresetChip: View {
                     .lineLimit(1)
                 Text(verbatim: tempoNotation(tempoDigits, reversed: reversed))
                     .font(TempoFont.rounded(.caption2, weight: .medium).monospacedDigit())
-                    .opacity(0.7)
+                    .opacity(TempoOpacity.secondaryDetail)
             }
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.md)
@@ -387,7 +384,7 @@ private struct DigitStepper: View {
                 increment()
             } label: {
                 Image(systemName: "chevron.up")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
@@ -396,16 +393,16 @@ private struct DigitStepper: View {
             Text(verbatim: digit.formatted(.number.locale(locale).precision(.fractionLength(0...1))))
                 .font(.system(size: digitSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(TempoScaleFactor.digit)
                 .lineLimit(1)
-                .frame(width: 64, height: 60)
+                .frame(width: TempoMetrics.digitBoxWidth, height: TempoMetrics.digitBoxHeight)
                 .background(Color.tempoSurfaceRaised, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
 
             Button {
                 decrement()
             } label: {
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: 32)
             }
             .foregroundStyle(Color.accentColor)
@@ -453,7 +450,7 @@ private struct CounterRow: View {
                 decrement()
             } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     .background(Color.tempoSurfaceRaised, in: Circle())
             }
@@ -463,13 +460,13 @@ private struct CounterRow: View {
             Text(verbatim: "\(value.formatted(.number.locale(locale)))\(unit)")
                 .font(TempoFont.rounded(.title3, weight: .bold))
                 .monospacedDigit()
-                .frame(minWidth: 64)
+                .frame(minWidth: TempoMetrics.counterValueMinWidth)
 
             Button {
                 increment()
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     .background(Color.tempoSurfaceRaised, in: Circle())
             }

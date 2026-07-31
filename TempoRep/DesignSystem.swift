@@ -33,6 +33,18 @@ extension Color {
     /// invented ad hoc later.
     static let tempoSuccess = Color.green
 
+    /// Text and glyphs sitting *on top of* an accent-colored fill (the
+    /// START / Pause / Continue buttons). Fixed black rather than
+    /// `.primary`: the accent is a bright, saturated color in both
+    /// appearances, and black clears WCAG AA contrast against either of
+    /// AccentColor's light/dark variants, where `.primary` would invert
+    /// to white in dark mode and fail.
+    static let tempoOnAccent = Color.black
+    /// The filled favorite star. Deliberately *not* the accent color —
+    /// a star being yellow is a near-universal convention, and using the
+    /// accent here would make favorited rows read as "selected" instead.
+    static let tempoFavorite = Color.yellow
+
     /// Fixed black background for the always-dark screens (workout, splash).
     /// Deliberately a literal, not `.tempoBackground` — those screens never
     /// follow the system appearance.
@@ -85,19 +97,105 @@ enum CornerRadius {
 
 // MARK: - Sizing
 
-/// Values that aren't content rhythm: minimum tap targets (Apple's HIG
-/// floor is 44pt) and the one deliberate layout offset that doesn't belong
-/// on the spacing scale.
+/// Fixed layout dimensions: things that aren't content rhythm (that's
+/// `Spacing`) and don't scale with Dynamic Type. Minimum tap targets,
+/// control sizes, and the fixed geometry of the workout display.
 enum TempoMetrics {
     static let minTapTarget: CGFloat = 44
     /// Extra top padding on the setup screen, clearing space for where the
     /// title/icons used to sit before the splash screen took over that job.
     static let setupTopInset: CGFloat = 60
+
+    // MARK: Workout display
+
+    /// The countdown ring's diameter in portrait.
+    static let ringDiameter: CGFloat = 300
     /// The countdown ring's diameter in `WorkoutView`'s landscape layout —
-    /// smaller than portrait's 300pt since landscape's constraint is
-    /// height, not width. A fixed layout constant, not Dynamic-Type-scaled,
-    /// like `setupTopInset` above.
+    /// smaller than portrait's, since landscape's constraint is height,
+    /// not width.
     static let compactRingDiameter: CGFloat = 220
+    static let ringLineWidth: CGFloat = 14
+    /// The circular badge behind the finish-screen checkmark.
+    static let completionBadgeDiameter: CGFloat = 130
+    /// The thin gradient bar that flashes at the top edge on phase change.
+    static let phaseFlashHeight: CGFloat = 3
+
+    // MARK: Splash
+
+    static let splashLogoDiameter: CGFloat = 96
+    static let splashLogoLineWidth: CGFloat = 10
+
+    // MARK: Controls
+
+    /// The tempo digit box on the setup screen — wide enough for "1.5".
+    static let digitBoxWidth: CGFloat = 64
+    static let digitBoxHeight: CGFloat = 60
+    /// The value readout between a `CounterRow`'s -/+ buttons.
+    static let counterValueMinWidth: CGFloat = 64
+    /// The value readout inside `CustomTempoView`'s inline stepper pill.
+    static let stepperValueWidth: CGFloat = 44
+    /// The starting-side segmented picker, which sits inline next to its
+    /// label rather than filling the row.
+    static let sidePickerWidth: CGFloat = 160
+
+    /// Point sizes for SF Symbol glyphs inside fixed-size controls. Not
+    /// Dynamic-Type-scaled on purpose: the glyph sits inside a fixed tap
+    /// target, so growing the glyph without growing its container would
+    /// clip it. The label *next to* such a control always uses a real
+    /// text style via `TempoFont`.
+    enum Icon {
+        static let small: CGFloat = 14
+        static let medium: CGFloat = 16
+        static let large: CGFloat = 18
+        /// The finish-screen checkmark — a display glyph, not a control.
+        static let celebration: CGFloat = 52
+    }
+}
+
+// MARK: - Letter spacing
+
+/// The app's only letter-spacing values. Used on the uppercase display
+/// text (wordmark, phase titles, button labels) where tracking is part of
+/// the look; ordinary prose never sets tracking at all.
+enum TempoTracking {
+    /// Small-caps labels (a side badge, "PAUSED").
+    static let label: CGFloat = 2
+    /// Uppercase button labels (START, CONTINUE).
+    static let button: CGFloat = 3
+    /// The finish-screen title.
+    static let title: CGFloat = 4
+    /// The splash wordmark — the widest, since it's the largest text.
+    static let wordmark: CGFloat = 8
+}
+
+// MARK: - Opacity
+
+/// Opacity values applied to *content* (text, fills). Surface tints live
+/// in the `Color` tokens above instead, since those are colors in their
+/// own right rather than a modifier on something else.
+enum TempoOpacity {
+    /// De-emphasized detail that still sits on a colored chip, where
+    /// `.secondary` would fight the chip's own tint.
+    static let secondaryDetail: Double = 0.7
+    /// The soft accent-colored disc behind the finish-screen checkmark.
+    static let badgeFill: Double = 0.15
+}
+
+// MARK: - Text scaling
+
+/// Floors for `minimumScaleFactor` on text that must not wrap or clip —
+/// the oversized workout display faces, and the tempo digit box. A lower
+/// floor means the text is allowed to shrink further before truncating.
+enum TempoScaleFactor {
+    /// The countdown numerals and landscape phase title, which have the
+    /// least room and the most size variation.
+    static let display: CGFloat = 0.4
+    /// The portrait phase title.
+    static let title: CGFloat = 0.5
+    /// The finish-screen title.
+    static let finishedTitle: CGFloat = 0.6
+    /// The setup screen's tempo digit box.
+    static let digit: CGFloat = 0.7
 }
 
 // MARK: - Typography
@@ -146,6 +244,10 @@ extension TempoMetrics {
 enum TempoAnimation {
     static let standard: Animation = .easeInOut(duration: 0.25)
     static let celebration: Animation = .spring(response: 0.5, dampingFraction: 0.62)
+    /// The phase-change flash's fade-out. Longer than `standard` on
+    /// purpose: it's a decorative glow that should linger and trail off,
+    /// not a state transition that should feel snappy.
+    static let phaseFlashFade: Animation = .easeOut(duration: 0.6)
 
     /// `standard`, or `nil` (no animation) when the user has Reduce Motion
     /// enabled — callers that need a Reduce-Motion-aware crossfade instead
@@ -155,7 +257,9 @@ enum TempoAnimation {
         reduceMotion ? nil : standard
     }
 
+    /// The celebration spring, or a plain `standard` crossfade under
+    /// Reduce Motion — the checkmark still appears, it just doesn't pop.
     static func celebration(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? .easeInOut(duration: 0.25) : celebration
+        reduceMotion ? standard : celebration
     }
 }

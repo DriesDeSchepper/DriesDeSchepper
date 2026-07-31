@@ -57,7 +57,7 @@ struct WorkoutView: View {
                 colors: [phaseAccentColor.opacity(0), phaseAccentColor, phaseAccentColor.opacity(0)],
                 startPoint: .leading, endPoint: .trailing
             )
-            .frame(height: 3)
+            .frame(height: TempoMetrics.phaseFlashHeight)
             .opacity(phaseFlashOpacity)
             .allowsHitTesting(false)
             .ignoresSafeArea(edges: .top)
@@ -79,7 +79,7 @@ struct WorkoutView: View {
             UIAccessibility.post(notification: .announcement, argument: newPhase.title(locale))
             if !reduceMotion {
                 phaseFlashOpacity = 1
-                withAnimation(.easeOut(duration: 0.6)) {
+                withAnimation(TempoAnimation.phaseFlashFade) {
                     phaseFlashOpacity = 0
                 }
             }
@@ -114,7 +114,7 @@ struct WorkoutView: View {
             if engine.config.unilateral, let side = engine.currentSide {
                 Text(verbatim: side.label(locale).uppercased(with: locale))
                     .font(TempoFont.rounded(.footnote, weight: .bold))
-                    .tracking(2)
+                    .tracking(TempoTracking.label)
                     .foregroundStyle(Color.accentColor)
                     .padding(.top, Spacing.xs)
             }
@@ -124,7 +124,7 @@ struct WorkoutView: View {
             Text(verbatim: engine.currentPhase.title(locale))
                 .font(.system(size: phaseTitleSize, weight: .heavy, design: .rounded))
                 .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(phaseAccentColor))
-                .minimumScaleFactor(0.5)
+                .minimumScaleFactor(TempoScaleFactor.title)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xl)
 
@@ -133,7 +133,7 @@ struct WorkoutView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, Spacing.xs)
 
-            ring(diameter: 300, digitSize: countdownSize)
+            ring(diameter: TempoMetrics.ringDiameter, digitSize: countdownSize)
                 .padding(.top, Spacing.xxl)
 
             Spacer()
@@ -158,7 +158,7 @@ struct WorkoutView: View {
                 if engine.config.unilateral, let side = engine.currentSide {
                     Text(verbatim: side.label(locale).uppercased(with: locale))
                         .font(TempoFont.rounded(.footnote, weight: .bold))
-                        .tracking(2)
+                        .tracking(TempoTracking.label)
                         .foregroundStyle(Color.accentColor)
                 }
 
@@ -167,7 +167,7 @@ struct WorkoutView: View {
                 Text(verbatim: engine.currentPhase.title(locale))
                     .font(.system(size: phaseTitleSize, weight: .heavy, design: .rounded))
                     .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(phaseAccentColor))
-                    .minimumScaleFactor(0.4)
+                    .minimumScaleFactor(TempoScaleFactor.display)
                     .lineLimit(1)
 
                 Text(verbatim: subtitle)
@@ -189,10 +189,10 @@ struct WorkoutView: View {
     private func ring(diameter: CGFloat, digitSize: CGFloat) -> some View {
         ZStack {
             Circle()
-                .stroke(Color.tempoOnDarkSurface, lineWidth: 14)
+                .stroke(Color.tempoOnDarkSurface, lineWidth: TempoMetrics.ringLineWidth)
             Circle()
                 .trim(from: 0, to: max(0.001, 1 - engine.phaseProgress))
-                .stroke(phaseAccentColor, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                .stroke(phaseAccentColor, style: StrokeStyle(lineWidth: TempoMetrics.ringLineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .accessibilityHidden(true)
 
@@ -200,13 +200,13 @@ struct WorkoutView: View {
                 Text(verbatim: countdownText)
                     .font(.system(size: digitSize, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .minimumScaleFactor(0.4)
+                    .minimumScaleFactor(TempoScaleFactor.display)
                     .lineLimit(1)
                     .padding(.horizontal, Spacing.xxl)
                 if engine.state == .paused {
                     Text("PAUSED")
                         .font(TempoFont.rounded(.body, weight: .bold))
-                        .tracking(2)
+                        .tracking(TempoTracking.label)
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -237,7 +237,7 @@ struct WorkoutView: View {
                     .padding(.vertical, Spacing.lg)
             }
             .background(Color.accentColor, in: Capsule())
-            .foregroundStyle(.black)
+            .foregroundStyle(Color.tempoOnAccent)
 
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
@@ -273,10 +273,10 @@ struct WorkoutView: View {
     private var checkmarkBadge: some View {
         ZStack {
             Circle()
-                .fill(Color.accentColor.opacity(0.15))
-                .frame(width: 130, height: 130)
+                .fill(Color.accentColor.opacity(TempoOpacity.badgeFill))
+                .frame(width: TempoMetrics.completionBadgeDiameter, height: TempoMetrics.completionBadgeDiameter)
             Image(systemName: "checkmark")
-                .font(.system(size: 52, weight: .bold))
+                .font(.system(size: TempoMetrics.Icon.celebration, weight: .bold))
                 .foregroundStyle(Color.accentColor)
         }
         // Reduce Motion: skip the scale entirely, keep only the fade — a
@@ -306,12 +306,12 @@ struct WorkoutView: View {
         } label: {
             Text("workout.continueButton")
                 .font(TempoFont.rounded(.title2, weight: .heavy))
-                .tracking(3)
+                .tracking(TempoTracking.button)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.xl)
         }
         .background(Color.accentColor, in: Capsule())
-        .foregroundStyle(.black)
+        .foregroundStyle(Color.tempoOnAccent)
     }
 
     private var portraitFinishedView: some View {
@@ -322,7 +322,7 @@ struct WorkoutView: View {
 
             Text(verbatim: Phase.done.title(locale))
                 .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
-                .tracking(4)
+                .tracking(TempoTracking.title)
                 .foregroundStyle(Color.accentColor)
 
             Text(verbatim: summaryText)
@@ -348,9 +348,9 @@ struct WorkoutView: View {
                     .scaleEffect(0.7) // fits a compact-height screen alongside the summary column
                 Text(verbatim: Phase.done.title(locale))
                     .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
-                    .tracking(4)
+                    .tracking(TempoTracking.title)
                     .foregroundStyle(Color.accentColor)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(TempoScaleFactor.finishedTitle)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
