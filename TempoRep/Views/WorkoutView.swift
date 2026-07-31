@@ -26,12 +26,16 @@ struct WorkoutView: View {
 
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
 
-    /// Eccentric (lowering) gets the one deliberate second brand color;
-    /// every other phase — concentric included — uses the regular accent.
-    /// Applied to the phase title and the ring's progress arc; the
+    /// Eccentric (lowering) and get-ready each get their own deliberate
+    /// color; every other phase — concentric included — uses the regular
+    /// accent. Applied to the phase title and the ring's progress arc; the
     /// countdown digit itself stays neutral white regardless of phase.
     private var phaseAccentColor: Color {
-        engine.currentPhase == .eccentric ? .tempoEccentric : .accentColor
+        switch engine.currentPhase {
+        case .eccentric: return .tempoEccentric
+        case .getReady: return .tempoGetReady
+        default: return .accentColor
+        }
     }
 
     var body: some View {

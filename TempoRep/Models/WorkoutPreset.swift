@@ -10,7 +10,7 @@ struct WorkoutPreset: Identifiable, Codable {
     let id: UUID
     let displayName: String
     let exerciseID: String?
-    let tempoDigits: [Int]
+    let tempoDigits: [Double]
     let repsPerSet: Int
     let sets: Int
     let restSeconds: Int
@@ -18,10 +18,11 @@ struct WorkoutPreset: Identifiable, Codable {
     let switchSeconds: Int
     let startingSide: Side
     let startPhase: StartPhase
+    let reverseDirection: Bool
 
-    init(id: UUID = UUID(), displayName: String, exerciseID: String?, tempoDigits: [Int],
+    init(id: UUID = UUID(), displayName: String, exerciseID: String?, tempoDigits: [Double],
          repsPerSet: Int, sets: Int, restSeconds: Int, unilateral: Bool, switchSeconds: Int,
-         startingSide: Side, startPhase: StartPhase) {
+         startingSide: Side, startPhase: StartPhase, reverseDirection: Bool = false) {
         self.id = id
         self.displayName = displayName
         self.exerciseID = exerciseID
@@ -33,6 +34,29 @@ struct WorkoutPreset: Identifiable, Codable {
         self.switchSeconds = switchSeconds
         self.startingSide = startingSide
         self.startPhase = startPhase
+        self.reverseDirection = reverseDirection
+    }
+
+    /// Hand-written rather than synthesized, for the same reason as
+    /// `WorkoutConfig.init(from:)`: synthesized decoding hard-fails on a
+    /// missing key even when the property has a default, so adding a field
+    /// (like `reverseDirection`) would make every previously-saved preset
+    /// fail to decode — and `PresetStore.load()` swallows that error, so
+    /// the user's whole saved-preset list would silently disappear.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        displayName = try container.decode(String.self, forKey: .displayName)
+        exerciseID = try container.decodeIfPresent(String.self, forKey: .exerciseID)
+        tempoDigits = try container.decode([Double].self, forKey: .tempoDigits)
+        repsPerSet = try container.decode(Int.self, forKey: .repsPerSet)
+        sets = try container.decode(Int.self, forKey: .sets)
+        restSeconds = try container.decode(Int.self, forKey: .restSeconds)
+        unilateral = try container.decode(Bool.self, forKey: .unilateral)
+        switchSeconds = try container.decode(Int.self, forKey: .switchSeconds)
+        startingSide = try container.decode(Side.self, forKey: .startingSide)
+        startPhase = try container.decode(StartPhase.self, forKey: .startPhase)
+        reverseDirection = try container.decodeIfPresent(Bool.self, forKey: .reverseDirection) ?? false
     }
 
     /// Captures everything a preset should from the current configuration —
@@ -42,7 +66,7 @@ struct WorkoutPreset: Identifiable, Codable {
                    tempoDigits: config.tempoDigits, repsPerSet: config.repsPerSet, sets: config.sets,
                    restSeconds: config.restSeconds, unilateral: config.unilateral,
                    switchSeconds: config.switchSeconds, startingSide: config.startingSide,
-                   startPhase: config.startPhase)
+                   startPhase: config.startPhase, reverseDirection: config.reverseDirection)
     }
 
     func apply(to config: inout WorkoutConfig) {
@@ -54,6 +78,7 @@ struct WorkoutPreset: Identifiable, Codable {
         config.switchSeconds = switchSeconds
         config.startingSide = startingSide
         config.startPhase = startPhase
+        config.reverseDirection = reverseDirection
         config.selectedExerciseID = exerciseID
     }
 

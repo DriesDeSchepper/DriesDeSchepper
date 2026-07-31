@@ -304,7 +304,7 @@ final class WorkoutEngine {
             // A new set, a new side, or the workout itself is starting.
             haptics.phaseChange()
             if voice {
-                speech.speak(new.phase.voiceWord(locale), languageCode: languageCode)
+                speech.speak(new.phase.voiceWord(locale, reversed: config.reverseDirection), languageCode: languageCode)
             } else {
                 sound.play(.phaseChange)
             }
@@ -322,7 +322,7 @@ final class WorkoutEngine {
                 haptics.phaseChange()
             }
             if voice {
-                speech.speak(new.phase.voiceWord(locale), languageCode: languageCode)
+                speech.speak(new.phase.voiceWord(locale, reversed: config.reverseDirection), languageCode: languageCode)
             } else {
                 sound.play(crossedRep ? .repComplete : .phaseChange)
             }

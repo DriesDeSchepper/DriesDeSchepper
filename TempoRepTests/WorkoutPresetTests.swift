@@ -25,6 +25,53 @@ struct WorkoutPresetTests {
         #expect(config.voiceCues == false)
     }
 
+    @Test func reverseDirectionRoundTripsThroughApplyAndSave() {
+        let preset = WorkoutPreset(displayName: "Lat Pulldown", exerciseID: nil,
+                                    tempoDigits: [2, 0, 1, 0], repsPerSet: 10, sets: 3, restSeconds: 60,
+                                    unilateral: false, switchSeconds: 10, startingSide: .left,
+                                    startPhase: .eccentric, reverseDirection: true)
+        var config = WorkoutConfig()
+        preset.apply(to: &config)
+        #expect(config.reverseDirection == true)
+
+        let saved = WorkoutPreset(displayName: "Saved", config: config)
+        #expect(saved.reverseDirection == true)
+    }
+
+    /// A preset saved before `reverseDirection` existed must still decode.
+    /// Synthesized Codable would hard-fail on the missing key — and
+    /// `PresetStore.load()` swallows decode errors, so that failure would
+    /// silently wipe every preset the user had saved.
+    @Test func decodesPresetSavedBeforeReverseDirectionExisted() throws {
+        let legacyJSON = """
+        {
+          "id": "8B2A1F6E-0000-4000-A000-000000000001",
+          "displayName": "Legacy",
+          "tempoDigits": [4, 0, 1, 0],
+          "repsPerSet": 8,
+          "sets": 3,
+          "restSeconds": 90,
+          "unilateral": false,
+          "switchSeconds": 10,
+          "startingSide": "left",
+          "startPhase": "eccentric"
+        }
+        """.data(using: .utf8)!
+
+        let decoded = try JSONDecoder().decode(WorkoutPreset.self, from: legacyJSON)
+        #expect(decoded.displayName == "Legacy")
+        #expect(decoded.reverseDirection == false)
+        // Integers in old JSON still decode into the now-Double tempo values.
+        #expect(decoded.tempoDigits == [4, 0, 1, 0])
+    }
+
+    @Test func reverseDirectionDefaultsToFalseWhenOmitted() {
+        let preset = WorkoutPreset(displayName: "Test", exerciseID: nil,
+                                    tempoDigits: [3, 0, 1, 0], repsPerSet: 8, sets: 3, restSeconds: 60,
+                                    unilateral: false, switchSeconds: 10, startingSide: .left, startPhase: .eccentric)
+        #expect(preset.reverseDirection == false)
+    }
+
     @Test func builtInPresetsReferenceExpectedExerciseIDs() {
         let ids = Set(WorkoutPreset.builtIn.compactMap(\.exerciseID))
         #expect(ids == ["Barbell_Squat", "Pushups", "Kettlebell_One-Legged_Deadlift", "Barbell_Deadlift"])

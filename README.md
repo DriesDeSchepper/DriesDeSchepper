@@ -2,21 +2,24 @@
 
 A minimal, high-contrast tempo training timer for strength workouts, built with SwiftUI (iOS 17+).
 
-In tempo training every rep follows a 4-digit tempo like **4010**:
+In tempo training every rep follows a 4-part tempo like **4010**, shown in
+the app as `↓4·0·↑1·0`:
 
-| Digit | Phase | Meaning |
+| Position | Phase | Meaning |
 |---|---|---|
 | 1st | Eccentric | lowering, in seconds |
 | 2nd | Pause | at the bottom |
 | 3rd | Concentric | lifting — `0` means explosive, timed as 1 s |
 | 4th | Pause | at the top |
 
+Each value goes in half-second steps (0–9), so `↓3·0·↑1.5·0` is valid too.
+
 ## Features
 
-- Tempo input as 4 digits, with a toggle for which phase a rep starts with (eccentric or concentric)
+- Tempo input as 4 digits with half-second precision (e.g. 1.5s), a toggle for which phase a rep starts with (eccentric or concentric), and a Reverse Direction option for exercises where the motion runs "the other way" visually (a lat pulldown's concentric phase pulls *down*) — swaps which arrow/voice-word marks which phase without changing what the digits mean or how long anything takes. The compact setup-screen steppers are for quick nudges; a "Custom Tempo" screen (via the ⓘ next to them) has one spacious row per phase with a description, plus Start-with and Reverse Direction in one place
 - Reps per set, number of sets, rest between sets
-- Huge phase name + countdown ring, readable from across the room — tinted violet during the eccentric (lowering) phase and accent green during concentric (lifting), with a brief colored flash at the top edge on every phase change (skipped under Reduce Motion)
-- Tempo shown as directional notation (`↓4·0·↑1·0`) everywhere it's displayed — arrows mark eccentric/concentric, dots separate the four digits — instead of a bare digit string
+- Huge phase name + countdown ring, readable from across the room — tinted violet during eccentric (lowering), blue during get-ready, and accent green during concentric (lifting) and everything else, with a brief colored flash at the top edge on every phase change (skipped under Reduce Motion)
+- Tempo shown as directional notation (`↓4·0·↑1.5·0`) everywhere it's displayed — arrows mark eccentric/concentric (reversed per-preset/session via Reverse Direction), dots separate the four digits — instead of a bare digit string
 - Distinct sound + haptic cues for phase changes (single tap), rep completion (double tap), and set completion (triple ascending tap) — built with Core Haptics for genuinely different felt patterns, not just different impact intensities; falls back to plain `UIImpactFeedbackGenerator`/`UINotificationFeedbackGenerator` on hardware without a custom-haptics-capable Taptic Engine
 - Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings
@@ -24,7 +27,7 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 - Background audio mode: cues keep playing when the app is backgrounded or the screen is locked, and your music (Spotify etc.) keeps playing alongside
 - Unilateral (single-side) mode: does all reps for one side, a switch pause, then all reps for the other side, within the same set — rest between sets only starts once both sides are done
 - Bundled exercise database (873 exercises from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db), no network calls): searchable picker with a filter sheet (muscle/equipment), a favorites star per exercise, and a recents list; picking an exercise suggests unilateral mode, starting phase (deadlifts/pull-ups lead with the concentric phase), and a starting tempo for its primary muscle group (e.g. slower eccentric + explosive concentric for calves/arms) — always shown as an overridable suggestion, never applied silently once you've changed the digits yourself; or skip it and run a bare timer
-- Presets (4 built-in — Squat, Push-Up, Single-Leg RDL, Deadlift — plus any you save) set exercise + tempo + reps + sets + rest + unilateral settings all at once; long-press a saved one to delete it. Save a few tempos for the same exercise (e.g. one per training phase) and the presets row narrows to just that exercise's presets once it's selected
+- Presets (4 built-in — Squat, Push-Up, Single-Leg RDL, Deadlift — plus any you save) set exercise + tempo + reps + sets + rest + unilateral + direction settings all at once; long-press a saved one to delete it. Save a few tempos for the same exercise (e.g. one per training phase) and the presets row narrows to just that exercise's presets once it's selected. A preset whose tempo matches the selected exercise's own suggestion is badged "Recommended"
 - Automatic rest countdown between sets
 - Pause/resume and stop
 - Settings (tempo, reps, sets, rest, voice) are remembered between launches
@@ -90,6 +93,7 @@ TempoRep/
   Services/PresetStore.swift  Persisted log of user-saved presets
   Views/SplashView.swift      Brief launch screen with the wordmark
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
+  Views/CustomTempoView.swift  Spacious per-phase tempo editor, start-phase and reverse-direction options
   Views/WorkoutView.swift     In-workout display and controls, with a landscape layout
   Services/OrientationLock.swift  Runtime portrait lock, released only while WorkoutView is on screen
   Views/HistoryView.swift     Workout history sheet

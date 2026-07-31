@@ -55,6 +55,10 @@ extension Color {
     /// was chosen around. Named and defined once here for the same reason
     /// every other color is: so nothing reinvents this shade ad hoc.
     static let tempoEccentric = Color(red: 0.55, green: 0.35, blue: 1.0)
+    /// The get-ready countdown's color — distinct from both rep-phase
+    /// colors above so "you're about to start" reads as its own state,
+    /// not a third variant of eccentric/concentric.
+    static let tempoGetReady = Color(red: 0.3, green: 0.55, blue: 1.0)
 }
 
 // MARK: - Spacing
