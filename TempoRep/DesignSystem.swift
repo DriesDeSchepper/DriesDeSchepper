@@ -46,6 +46,15 @@ extension Color {
     /// since these never adapt.
     static let tempoOnDarkSurface = Color.white.opacity(0.1)
     static let tempoOnDarkSurfaceRaised = Color.white.opacity(0.12)
+
+    /// The one deliberate second brand color, workout-screen-only: the
+    /// eccentric (lowering) phase is tinted violet instead of the regular
+    /// accent green, so the two halves of a rep read apart at a glance —
+    /// concentric (lifting) keeps using the regular `.accentColor`, since
+    /// that's already green and "lifting" is the phase the accent color
+    /// was chosen around. Named and defined once here for the same reason
+    /// every other color is: so nothing reinvents this shade ad hoc.
+    static let tempoEccentric = Color(red: 0.55, green: 0.35, blue: 1.0)
 }
 
 // MARK: - Spacing

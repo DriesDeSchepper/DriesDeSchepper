@@ -32,9 +32,13 @@ struct WorkoutConfigTests {
         #expect(config.concentricSeconds == 3)
     }
 
-    @Test func tempoStringJoinsDigits() {
+    @Test func tempoStringUsesDirectionalNotation() {
         var config = WorkoutConfig()
         config.tempoDigits = [4, 0, 1, 0]
-        #expect(config.tempoString == "4010")
+        #expect(config.tempoString == "↓4·0·↑1·0")
+    }
+
+    @Test func tempoAccessibilityReadingIsPlainDashJoined() {
+        #expect(tempoAccessibilityReading([4, 0, 1, 0]) == "4-0-1-0")
     }
 }

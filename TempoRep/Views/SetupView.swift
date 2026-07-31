@@ -357,6 +357,7 @@ private struct PresetChip: View {
     let displayName: String
     let tempoDigits: [Int]
     let action: () -> Void
+    @Environment(\.locale) private var locale
 
     var body: some View {
         Button(action: action) {
@@ -364,7 +365,7 @@ private struct PresetChip: View {
                 Text(verbatim: displayName)
                     .font(TempoFont.rounded(.caption, weight: .bold))
                     .lineLimit(1)
-                Text(verbatim: tempoDigits.map(String.init).joined())
+                Text(verbatim: tempoNotation(tempoDigits))
                     .font(TempoFont.rounded(.caption2, weight: .medium).monospacedDigit())
                     .opacity(0.7)
             }
@@ -373,6 +374,8 @@ private struct PresetChip: View {
         }
         .background(Color.tempoSurfaceRaised, in: Capsule())
         .foregroundStyle(.primary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(displayName), \(L("Tempo", locale)) \(tempoAccessibilityReading(tempoDigits))"))
     }
 }
 

@@ -1,5 +1,23 @@
 import Foundation
 
+/// Tempo digits formatted with direction arrows and dot separators
+/// (e.g. "↓4·0·↑1·0") instead of a bare joined string — clearer at a
+/// glance about which number is eccentric (lowering) vs. concentric
+/// (lifting). Digits and separators are locale-independent (plain
+/// numerals and symbols), so this doesn't go through the string catalog.
+func tempoNotation(_ digits: [Int]) -> String {
+    guard digits.count == 4 else { return digits.map(String.init).joined() }
+    return "↓\(digits[0])·\(digits[1])·↑\(digits[2])·\(digits[3])"
+}
+
+/// A VoiceOver-friendly reading of tempo digits ("4-0-1-0") — the arrow/
+/// dot symbols in `tempoNotation` aren't reliably spoken by VoiceOver, so
+/// anywhere that notation is shown as text supplies this instead via an
+/// explicit accessibility label.
+func tempoAccessibilityReading(_ digits: [Int]) -> String {
+    digits.map(String.init).joined(separator: "-")
+}
+
 /// Which phase a rep's tempo sequence leads with. Most lifts lower first
 /// (eccentric); a few — deadlifts, pull-ups — start by lifting from a dead
 /// stop, so their tempo sequence leads with the concentric phase instead.
@@ -31,7 +49,7 @@ struct WorkoutConfig: Equatable, Codable {
     /// A concentric digit of 0 means "explosive" — timed as 1 second.
     var concentricSeconds: Int { tempoDigits[2] == 0 ? 1 : tempoDigits[2] }
 
-    var tempoString: String { tempoDigits.map(String.init).joined() }
+    var tempoString: String { tempoNotation(tempoDigits) }
 
     // MARK: - Persistence
 
@@ -85,7 +103,7 @@ struct WorkoutRecord: Identifiable, Codable {
     let timeUnderTension: TimeInterval
     let totalDuration: TimeInterval
 
-    var tempoString: String { tempoDigits.map(String.init).joined() }
+    var tempoString: String { tempoNotation(tempoDigits) }
 }
 
 enum Phase: Equatable {

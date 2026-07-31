@@ -15,7 +15,8 @@ In tempo training every rep follows a 4-digit tempo like **4010**:
 
 - Tempo input as 4 digits, with a toggle for which phase a rep starts with (eccentric or concentric)
 - Reps per set, number of sets, rest between sets
-- Huge phase name + countdown ring, readable from across the room
+- Huge phase name + countdown ring, readable from across the room — tinted violet during the eccentric (lowering) phase and accent green during concentric (lifting), with a brief colored flash at the top edge on every phase change (skipped under Reduce Motion)
+- Tempo shown as directional notation (`↓4·0·↑1·0`) everywhere it's displayed — arrows mark eccentric/concentric, dots separate the four digits — instead of a bare digit string
 - Distinct sound + haptic cues for phase changes (single tap), rep completion (double tap), and set completion (triple ascending tap) — built with Core Haptics for genuinely different felt patterns, not just different impact intensities; falls back to plain `UIImpactFeedbackGenerator`/`UINotificationFeedbackGenerator` on hardware without a custom-haptics-capable Taptic Engine
 - Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
 - Localized in English, Dutch, French, and German — follows the iOS system language by default, with an override in Settings

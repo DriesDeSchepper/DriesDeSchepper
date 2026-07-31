@@ -67,7 +67,7 @@ struct HistoryView: View {
                         .font(TempoFont.rounded(.title3, weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(Color.accentColor)
-                        .accessibilityLabel(Text(verbatim: record.tempoDigits.map(String.init).joined(separator: "-")))
+                        .accessibilityLabel(Text(verbatim: tempoAccessibilityReading(record.tempoDigits)))
                     Text("\(record.sets)×\(record.repsPerSet)")
                         .font(TempoFont.rounded(.body, weight: .semibold))
                         .monospacedDigit()

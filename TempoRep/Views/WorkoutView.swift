@@ -18,12 +18,21 @@ struct WorkoutView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var completionAnimated = false
+    @State private var phaseFlashOpacity: Double = 0
     @ScaledMetric(relativeTo: .largeTitle) private var countdownSize = TempoMetrics.Display.countdown
     @ScaledMetric(relativeTo: .title) private var countdownSizeCompact = TempoMetrics.Display.countdownCompact
     @ScaledMetric(relativeTo: .largeTitle) private var phaseTitleSize = TempoMetrics.Display.phaseTitle
     @ScaledMetric(relativeTo: .title) private var finishedTitleSize = TempoMetrics.Display.finishedTitle
 
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
+
+    /// Eccentric (lowering) gets the one deliberate second brand color;
+    /// every other phase — concentric included — uses the regular accent.
+    /// Applied to the phase title and the ring's progress arc; the
+    /// countdown digit itself stays neutral white regardless of phase.
+    private var phaseAccentColor: Color {
+        engine.currentPhase == .eccentric ? .tempoEccentric : .accentColor
+    }
 
     var body: some View {
         ZStack {
@@ -33,6 +42,21 @@ struct WorkoutView: View {
             } else {
                 activeView
             }
+        }
+        .overlay(alignment: .top) {
+            // A brief phase-colored flash at the top edge on every phase
+            // change — a "reacting to you" touch alongside the phase
+            // color and countdown. Purely decorative, so it's the one
+            // thing here that's skipped outright under Reduce Motion
+            // rather than given a plainer substitute.
+            LinearGradient(
+                colors: [phaseAccentColor.opacity(0), phaseAccentColor, phaseAccentColor.opacity(0)],
+                startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 3)
+            .opacity(phaseFlashOpacity)
+            .allowsHitTesting(false)
+            .ignoresSafeArea(edges: .top)
         }
         .preferredColorScheme(.dark)
         .onAppear {
@@ -49,6 +73,12 @@ struct WorkoutView: View {
             // accessibility-only announcement, not the app's own TTS.
             guard engine.state == .running || engine.state == .paused else { return }
             UIAccessibility.post(notification: .announcement, argument: newPhase.title(locale))
+            if !reduceMotion {
+                phaseFlashOpacity = 1
+                withAnimation(.easeOut(duration: 0.6)) {
+                    phaseFlashOpacity = 0
+                }
+            }
         }
         .onChange(of: engine.state) { _, newState in
             if newState == .finished {
@@ -89,7 +119,7 @@ struct WorkoutView: View {
 
             Text(verbatim: engine.currentPhase.title(locale))
                 .font(.system(size: phaseTitleSize, weight: .heavy, design: .rounded))
-                .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.tempoOnDark))
+                .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(phaseAccentColor))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xl)
@@ -132,7 +162,7 @@ struct WorkoutView: View {
 
                 Text(verbatim: engine.currentPhase.title(locale))
                     .font(.system(size: phaseTitleSize, weight: .heavy, design: .rounded))
-                    .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.tempoOnDark))
+                    .foregroundStyle(engine.state == .paused ? AnyShapeStyle(.secondary) : AnyShapeStyle(phaseAccentColor))
                     .minimumScaleFactor(0.4)
                     .lineLimit(1)
 
@@ -158,7 +188,7 @@ struct WorkoutView: View {
                 .stroke(Color.tempoOnDarkSurface, lineWidth: 14)
             Circle()
                 .trim(from: 0, to: max(0.001, 1 - engine.phaseProgress))
-                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                .stroke(phaseAccentColor, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .accessibilityHidden(true)
 
@@ -294,6 +324,7 @@ struct WorkoutView: View {
             Text(verbatim: summaryText)
                 .font(TempoFont.rounded(.body, weight: .medium))
                 .foregroundStyle(.secondary)
+                .accessibilityLabel(Text(verbatim: accessibleSummaryText))
 
             timeUnderTensionBlock
                 .padding(.top, Spacing.xs)
@@ -324,6 +355,7 @@ struct WorkoutView: View {
                 Text(verbatim: summaryText)
                     .font(TempoFont.rounded(.body, weight: .medium))
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel(Text(verbatim: accessibleSummaryText))
                 timeUnderTensionBlock
                 continueButton
             }
@@ -339,6 +371,17 @@ struct WorkoutView: View {
         let setsWord = L(sets == 1 ? "workout.set" : "workout.sets", locale)
         let repsWord = L(reps == 1 ? "workout.rep" : "workout.reps", locale)
         return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(engine.config.tempoString)"
+    }
+
+    /// `summaryText` with a plain dash-separated tempo reading instead of
+    /// the arrow/dot notation, which VoiceOver doesn't reliably speak.
+    private var accessibleSummaryText: String {
+        let sets = engine.config.sets
+        let reps = engine.config.repsPerSet
+        let setsWord = L(sets == 1 ? "workout.set" : "workout.sets", locale)
+        let repsWord = L(reps == 1 ? "workout.rep" : "workout.reps", locale)
+        let tempo = tempoAccessibilityReading(engine.config.tempoDigits)
+        return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(tempo)"
     }
 
     /// Under a minute, "0:15" reads ambiguously — spell out the unit
