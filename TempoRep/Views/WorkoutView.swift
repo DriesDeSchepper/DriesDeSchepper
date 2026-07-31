@@ -38,6 +38,33 @@ struct WorkoutView: View {
         }
     }
 
+    /// The four phases that make up a rep. These get the pacing track;
+    /// get-ready / rest / switch-side are waiting phases and keep the
+    /// countdown ring, which is what a plain "time until the next thing"
+    /// countdown wants to look like.
+    private var isRepPhase: Bool {
+        switch engine.currentPhase {
+        case .eccentric, .pauseBottom, .concentric, .pauseTop: return true
+        default: return false
+        }
+    }
+
+    /// Swaps the screen's centrepiece: the pacing track while a rep is
+    /// running, the countdown ring while waiting. Both carry the seconds
+    /// remaining, so nothing is lost in either state.
+    @ViewBuilder
+    private func centrepiece(ringDiameter: CGFloat, digitSize: CGFloat, compact: Bool) -> some View {
+        if isRepPhase {
+            TempoPacingView(engine: engine,
+                            countdownText: countdownText,
+                            countdownSize: digitSize,
+                            phaseColor: phaseAccentColor,
+                            isCompact: compact)
+        } else {
+            ring(diameter: ringDiameter, digitSize: digitSize)
+        }
+    }
+
     var body: some View {
         ZStack {
             Color.tempoWorkoutBackground.ignoresSafeArea()
@@ -133,7 +160,9 @@ struct WorkoutView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, Spacing.xs)
 
-            ring(diameter: TempoMetrics.ringDiameter, digitSize: countdownSize)
+            centrepiece(ringDiameter: TempoMetrics.ringDiameter,
+                        digitSize: countdownSize,
+                        compact: false)
                 .padding(.top, Spacing.xxl)
 
             Spacer()
@@ -180,7 +209,9 @@ struct WorkoutView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            ring(diameter: TempoMetrics.compactRingDiameter, digitSize: countdownSizeCompact)
+            centrepiece(ringDiameter: TempoMetrics.compactRingDiameter,
+                        digitSize: countdownSizeCompact,
+                        compact: true)
         }
         .padding(.horizontal, Spacing.xl)
         .padding(.vertical, Spacing.md)

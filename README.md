@@ -18,7 +18,8 @@ Each value goes in half-second steps (0–9), so `↓3·0·↑1.5·0` is valid t
 
 - Tempo input as 4 digits with half-second precision (e.g. 1.5s), a toggle for which phase a rep starts with (eccentric or concentric), and a Reverse Direction option for exercises where the motion runs "the other way" visually (a lat pulldown's concentric phase pulls *down*) — swaps which arrow/voice-word marks which phase without changing what the digits mean or how long anything takes. The compact setup-screen steppers are for quick nudges; a "Custom Tempo" screen (via the ⓘ next to them) has one spacious row per phase with a description, plus Start-with and Reverse Direction in one place
 - Reps per set, number of sets, rest between sets
-- Huge phase name + countdown ring, readable from across the room — tinted violet during eccentric (lowering), blue during get-ready, and accent green during concentric (lifting) and everything else, with a brief colored flash at the top edge on every phase change (skipped under Reduce Motion)
+- Huge phase name, readable from across the room — tinted violet during eccentric (lowering), blue during get-ready, and accent green during concentric (lifting) and everything else, with a brief colored flash at the top edge on every phase change (skipped under Reduce Motion)
+- Live pacing track during a rep: a glowing dot rides a vertical line — descending through the eccentric, breathing at the stretched end, driving back up through the concentric — with the four tempo values beside it and the running one lit and enlarged. The dot's position is interpolated from the engine's wall-clock progress rather than a SwiftUI animation, so it can never disagree with the countdown or the spoken cue; an explosive (`0`/`0.5`) concentric gets a hard ease-out that visibly launches, while a 2s+ concentric stays linear because a controlled lift should look controlled. Honors Reverse Direction by mirroring the track. The countdown ring still appears during get-ready, rest and side-switch — the waiting phases
 - Tempo shown as directional notation (`↓4·0·↑1.5·0`) everywhere it's displayed — arrows mark eccentric/concentric (reversed per-preset/session via Reverse Direction), dots separate the four digits — instead of a bare digit string
 - Distinct sound + haptic cues for phase changes (single tap), rep completion (double tap), and set completion (triple ascending tap) — built with Core Haptics for genuinely different felt patterns, not just different impact intensities; falls back to plain `UIImpactFeedbackGenerator`/`UINotificationFeedbackGenerator` on hardware without a custom-haptics-capable Taptic Engine
 - Haptic feedback throughout the UI too: steppers, toggles, pickers, presets, and the Start/Pause/Stop/Continue buttons (haptics only fire on a real device — the simulator can't drive the Taptic Engine at all)
@@ -95,6 +96,7 @@ TempoRep/
   Views/SetupView.swift       Tempo/reps/sets/rest/exercise configuration
   Views/CustomTempoView.swift  Spacious per-phase tempo editor, start-phase and reverse-direction options
   Views/WorkoutView.swift     In-workout display and controls, with a landscape layout
+  Views/TempoPacingView.swift  Vertical pacing track + live tempo digits shown during a rep
   Services/OrientationLock.swift  Runtime portrait lock, released only while WorkoutView is on screen
   Views/HistoryView.swift     Workout history sheet
   Views/SettingsView.swift    Language override, voice countdown toggle, per-language speech voice picker

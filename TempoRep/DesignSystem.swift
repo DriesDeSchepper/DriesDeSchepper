@@ -138,6 +138,55 @@ enum TempoMetrics {
     /// label rather than filling the row.
     static let sidePickerWidth: CGFloat = 160
 
+    // MARK: Tempo pacing track
+
+    /// The vertical track the pacing dot rides during a rep — see
+    /// `TempoPacingView`.
+    enum Pacing {
+        static let trackWidth: CGFloat = 6
+        static let trackHeight: CGFloat = 260
+        /// Landscape's constraint is height, so the track shortens rather
+        /// than the layout scrolling.
+        static let trackHeightCompact: CGFloat = 150
+        static let dotDiameter: CGFloat = 26
+        static let dotDiameterCompact: CGFloat = 20
+        /// Neon bloom around the dot: a tight inner glow plus a wider,
+        /// fainter outer one, which is what keeps it reading as neon
+        /// rather than as a drop shadow.
+        static let glowRadius: CGFloat = 16
+        static let glowRadiusOuter: CGFloat = 32
+        /// The lit digit's glow — smaller, since the glyph is smaller.
+        static let glowRadiusDigit: CGFloat = 8
+        /// Relative strength of the outer bloom against the inner one.
+        static let outerGlowFactor: Double = 0.6
+        /// How much the dot swells at the moment a phase changes.
+        static let dotPopScale: CGFloat = 1.35
+        /// Peak extra scale on an isometric hold's pulse.
+        static let holdPulseAmplitude: CGFloat = 0.14
+        /// Isometric hold pulse rate, in cycles per second. Deliberately
+        /// close to a calm breathing cadence — this marks "hold still",
+        /// so it should not read as urgency.
+        static let holdPulseHz: Double = 0.8
+        /// How much the active tempo digit grows over the inactive three.
+        static let activeDigitScale: CGFloat = 1.3
+
+        // The phase-start swell is a damped oscillation rather than a
+        // plain fade — the brief dip below full size is what reads as
+        // spring. Higher decay settles sooner; the wobble rate sets how
+        // many times it rings before settling.
+        static let popDecayRate: Double = 7
+        static let popWobbleHz: Double = 2.5
+        /// Floor on the dot's scale, so the oscillation's undershoot can
+        /// never collapse it.
+        static let minDotScale: CGFloat = 0.85
+
+        /// Concentric durations at or above this many seconds are treated
+        /// as "controlled" and get no ease-out at all — the lift should
+        /// look as measured as it's meant to be performed. Below it, the
+        /// ease-out fades in proportionally.
+        static let explosiveThresholdSeconds: Double = 2
+    }
+
     /// Point sizes for SF Symbol glyphs inside fixed-size controls. Not
     /// Dynamic-Type-scaled on purpose: the glyph sits inside a fixed tap
     /// target, so growing the glyph without growing its container would
@@ -179,6 +228,12 @@ enum TempoOpacity {
     static let secondaryDetail: Double = 0.7
     /// The soft accent-colored disc behind the finish-screen checkmark.
     static let badgeFill: Double = 0.15
+    /// The three tempo digits that aren't the phase currently running.
+    static let inactiveDigit: Double = 0.3
+    /// The pacing track's unfilled portion.
+    static let pacingTrack: Double = 0.12
+    /// The pacing dot's neon bloom at full intensity.
+    static let pacingGlow: Double = 0.55
 }
 
 // MARK: - Text scaling
@@ -248,6 +303,19 @@ enum TempoAnimation {
     /// purpose: it's a decorative glow that should linger and trail off,
     /// not a state transition that should feel snappy.
     static let phaseFlashFade: Animation = .easeOut(duration: 0.6)
+
+    /// Snappy, slightly overshooting spring for the pacing dot's pop and
+    /// the active tempo digit's scale-up.
+    ///
+    /// Deliberately applied *only* to decorative properties — scale and
+    /// glow — never to the dot's position along the track. A spring
+    /// settles in its own time (~0.4s here) no matter how long the phase
+    /// actually is, so springing the position would show a 3-second
+    /// concentric finishing in under half a second. Position is the one
+    /// thing on this screen that has to stay literally true to the clock,
+    /// so it's interpolated from the engine's elapsed-time progress
+    /// instead. See `TempoPacingView`.
+    static let athleticPop: Animation = .spring(response: 0.25, dampingFraction: 0.5)
 
     /// `standard`, or `nil` (no animation) when the user has Reduce Motion
     /// enabled — callers that need a Reduce-Motion-aware crossfade instead
