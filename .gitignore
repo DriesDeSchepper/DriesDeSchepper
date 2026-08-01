@@ -6,3 +6,27 @@ build/
 
 # macOS
 .DS_Store
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+# Regenerated on every fastlane invocation, so committing it just means a
+# modified file appears after every run. The lane docs live in the
+# Fastfile's own `desc` lines, which is where they're read from anyway.
+fastlane/README.md
+*.ipa
+*.dSYM.zip
+
+# Bundler. Gemfile.lock is deliberately not committed: the only machine
+# that resolves it is a macOS runner, and a lockfile generated anywhere
+# else pins platform-specific gems that then fail to install there. The
+# Gemfile's version floor is what pins behaviour instead.
+Gemfile.lock
+.bundle/
+
+# Signing material — belongs in GitHub secrets, never in the repo.
+*.p12
+*.p8
+*.mobileprovision
+*.cer

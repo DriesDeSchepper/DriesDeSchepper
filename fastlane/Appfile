@@ -1,0 +1,15 @@
+app_identifier("com.dries.temporep")
+
+# The Team ID comes from the environment rather than living in the repo.
+# It isn't a secret in the cryptographic sense — it appears in every
+# provisioning profile — but it identifies a real Apple Developer account
+# and there's no reason to publish it in a public repository.
+#
+# Guarded, so running a lane locally without it set fails with the
+# Fastfile's own message naming the variable, rather than a nil team_id
+# surfacing later as an opaque signing error.
+team_id(ENV["APPLE_TEAM_ID"]) unless ENV["APPLE_TEAM_ID"].to_s.empty?
+
+# No apple_id / itc_team_id here: authentication is by App Store Connect
+# API key, which sidesteps Apple ID passwords, app-specific passwords and
+# 2FA session expiry entirely. See TESTFLIGHT.md.

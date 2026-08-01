@@ -1,0 +1,272 @@
+require "base64"
+require "securerandom"
+require "shellwords"
+require "tmpdir"
+
+default_platform(:ios)
+
+# This app collects nothing about its users; the same courtesy applies to
+# its build pipeline.
+opt_out_usage
+
+APP_IDENTIFIER = "com.dries.temporep".freeze
+XCODE_PROJECT  = "TempoRep.xcodeproj".freeze
+SCHEME         = "TempoRep".freeze
+OUTPUT_DIR     = "build".freeze
+IPA_NAME       = "TempoRep.ipa".freeze
+
+# A throwaway keychain, created per run and deleted after. Named and
+# created explicitly rather than via `setup_ci` so the certificate import
+# and the later signing lookup are guaranteed to agree on where it is.
+CI_KEYCHAIN = "temporep_ci.keychain-db".freeze
+
+platform :ios do
+  # ---------------------------------------------------------------------
+  # Lanes
+  # ---------------------------------------------------------------------
+
+  desc "Archive a signed App Store build without uploading it."
+  desc "Run this first: it proves the signing setup works without " \
+       "consuming a TestFlight build number or sending Apple anything."
+  lane :build_only do |options|
+    key = connect_api_key
+    prepare_signing
+
+    archive(
+      api_key: key,
+      version: options[:version],
+      build_number: options[:build_number] || 1
+    )
+
+    UI.success("Archived #{OUTPUT_DIR}/#{IPA_NAME}. Nothing was uploaded.")
+  ensure
+    cleanup_signing
+  end
+
+  desc "Archive and upload a build to TestFlight."
+  lane :beta do |options|
+    key = connect_api_key
+    prepare_signing
+
+    build_number = options[:build_number] || next_build_number(key)
+    UI.message("Using build number #{build_number}.")
+
+    archive(api_key: key, version: options[:version], build_number: build_number)
+
+    upload_to_testflight(
+      api_key: key,
+      app_identifier: APP_IDENTIFIER,
+      ipa: File.join(OUTPUT_DIR, IPA_NAME),
+      # Internal testers only. External testing needs Beta App Review,
+      # which should be a deliberate decision rather than something every
+      # CI run triggers.
+      distribute_external: false,
+      # Wait for Apple to finish processing, so a build that fails
+      # validation reports as a failed job rather than a green one
+      # followed by a silent rejection email an hour later. Waiting is
+      # also what makes setting the changelog possible at all.
+      skip_waiting_for_build_processing: false,
+      changelog: changelog_for(options)
+    )
+
+    UI.success("Build #{build_number} is on TestFlight.")
+  ensure
+    cleanup_signing
+  end
+
+  # ---------------------------------------------------------------------
+  # Authentication
+  # ---------------------------------------------------------------------
+
+  # App Store Connect API key, from a base64-encoded .p8 in the
+  # environment. Preferred over an Apple ID: it never prompts for 2FA and
+  # the session can't expire halfway through a run.
+  def connect_api_key
+    app_store_connect_api_key(
+      key_id: fetch_env("APP_STORE_CONNECT_KEY_ID"),
+      issuer_id: fetch_env("APP_STORE_CONNECT_ISSUER_ID"),
+      key_filepath: api_key_path,
+      in_house: false
+    )
+  end
+
+  # The key decoded to a real file on disk, because two different
+  # consumers need it and only one of them can take it in memory:
+  # fastlane's own actions accept the content, but `xcodebuild
+  # -authenticationKeyPath` insists on a path. Written once per run and
+  # deleted in cleanup_signing.
+  def api_key_path
+    @api_key_path ||= begin
+      path = File.join(Dir.tmpdir, "AuthKey_#{fetch_env('APP_STORE_CONNECT_KEY_ID')}.p8")
+      File.binwrite(path, Base64.decode64(fetch_env("APP_STORE_CONNECT_KEY_CONTENT")))
+      File.chmod(0o600, path)
+      File.expand_path(path)
+    end
+  end
+
+  # The flags that let xcodebuild talk to App Store Connect on its own.
+  # Needed in both the archive and the export phase: gym runs them as two
+  # separate xcodebuild invocations, and the export is the one that has to
+  # resolve an App Store distribution profile.
+  def provisioning_args
+    [
+      "-allowProvisioningUpdates",
+      "-authenticationKeyPath #{api_key_path.shellescape}",
+      "-authenticationKeyID #{fetch_env('APP_STORE_CONNECT_KEY_ID').shellescape}",
+      "-authenticationKeyIssuerID #{fetch_env('APP_STORE_CONNECT_ISSUER_ID').shellescape}"
+    ].join(" ")
+  end
+
+  # ---------------------------------------------------------------------
+  # Signing
+  # ---------------------------------------------------------------------
+
+  # Puts the distribution certificate into a throwaway keychain.
+  #
+  # The certificate is *imported* rather than created on demand. With
+  # `-allowProvisioningUpdates` alone, Xcode mints a new distribution
+  # certificate whenever it can't find one — and on an ephemeral runner it
+  # never can, so every build would burn one of the account's three
+  # allowed distribution certificates and the fourth run would fail
+  # outright. Importing a fixed .p12 means Xcode finds a certificate
+  # already there and only manages the provisioning profile, which is
+  # renewable without limit.
+  def prepare_signing
+    return UI.message("Not CI — using the local keychain as-is.") unless ci?
+
+    password = SecureRandom.hex(24)
+    ENV["TEMPOREP_KEYCHAIN_PASSWORD"] = password
+
+    create_keychain(
+      name: CI_KEYCHAIN,
+      password: password,
+      default_keychain: true,
+      unlock: true,
+      # Long enough to outlive an archive; without this the keychain can
+      # relock mid-build and signing fails with a misleading error.
+      timeout: 3600,
+      lock_when_sleeps: false
+    )
+
+    p12 = File.join(Dir.tmpdir, "temporep-distribution.p12")
+    File.binwrite(p12, Base64.decode64(fetch_env("DIST_CERTIFICATE_P12")))
+
+    begin
+      import_certificate(
+        certificate_path: p12,
+        certificate_password: fetch_env("DIST_CERTIFICATE_PASSWORD"),
+        keychain_name: CI_KEYCHAIN,
+        keychain_password: password
+      )
+    ensure
+      File.delete(p12) if File.exist?(p12)
+    end
+  end
+
+  # Runs on every exit path, success or failure. Each step is guarded
+  # separately so a failure in one still lets the other run, and nothing
+  # here is ever allowed to mask the real error that got us here.
+  def cleanup_signing
+    if @api_key_path && File.exist?(@api_key_path)
+      begin
+        File.delete(@api_key_path)
+      rescue StandardError => e
+        UI.important("Couldn't delete the API key file: #{e.message}")
+      end
+    end
+
+    return unless ci?
+
+    begin
+      delete_keychain(name: CI_KEYCHAIN)
+    rescue StandardError => e
+      UI.important("Couldn't delete the temporary keychain: #{e.message}")
+    end
+  end
+
+  # ---------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------
+
+  # One higher than whatever TestFlight already has, rather than a counter
+  # kept in the repo. App Store Connect rejects a duplicate build number
+  # for a given version, and it is the only authority on what has actually
+  # been uploaded — a counter in git drifts the moment a run fails after
+  # the upload succeeds, or someone archives from their own machine.
+  def next_build_number(key)
+    latest = latest_testflight_build_number(
+      app_identifier: APP_IDENTIFIER,
+      api_key: key,
+      initial_build_number: 0
+    )
+    latest.to_i + 1
+  rescue StandardError => e
+    UI.user_error!(
+      "Couldn't read the latest TestFlight build number: #{e.message}\n\n" \
+      "The usual cause is that no app record exists yet for " \
+      "#{APP_IDENTIFIER} in App Store Connect — create it there first, " \
+      "see TESTFLIGHT.md. To bypass this lookup, pass build_number:."
+    )
+  end
+
+  # Version and build number are injected as build settings rather than
+  # written into project.pbxproj. `GENERATE_INFOPLIST_FILE` is on, so
+  # CFBundleShortVersionString and CFBundleVersion derive from these two
+  # settings — meaning a CI run needs no agvtool (which this project isn't
+  # configured for anyway), no commit back to the branch, and leaves no
+  # dirty working tree behind.
+  def archive(api_key:, version:, build_number:)
+    team = fetch_env("APPLE_TEAM_ID")
+
+    settings = { "CURRENT_PROJECT_VERSION" => build_number, "DEVELOPMENT_TEAM" => team }
+    settings["MARKETING_VERSION"] = version unless version.to_s.strip.empty?
+
+    build_settings = settings.map { |k, v| "#{k}=#{v.to_s.shellescape}" }.join(" ")
+
+    build_app(
+      project: XCODE_PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: team,
+      # Note there is no `api_key:` here — unlike pilot and spaceship,
+      # gym has no such option. xcodebuild gets the credentials through
+      # the -authentication* flags instead, in both phases.
+      xcargs: "#{build_settings} #{provisioning_args}",
+      export_xcargs: provisioning_args,
+      output_directory: OUTPUT_DIR,
+      output_name: IPA_NAME,
+      clean: true
+    )
+  end
+
+  # ---------------------------------------------------------------------
+  # Odds and ends
+  # ---------------------------------------------------------------------
+
+  # "What to Test", shown to the tester. Falls back to the commit subject,
+  # which beats an empty box and costs the operator nothing.
+  def changelog_for(options)
+    supplied = options[:changelog].to_s.strip
+    return supplied unless supplied.empty?
+
+    subject = `git log -1 --pretty=%s`.strip
+    subject.empty? ? "No release notes supplied." : subject
+  end
+
+  def ci?
+    !ENV["CI"].to_s.empty?
+  end
+
+  def fetch_env(name)
+    value = ENV[name].to_s
+    if value.empty?
+      UI.user_error!("Missing required environment variable #{name}. See TESTFLIGHT.md.")
+    end
+    value
+  end
+
+  error do |lane, exception|
+    UI.error("Lane #{lane} failed: #{exception.message}")
+  end
+end

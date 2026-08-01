@@ -14,7 +14,7 @@
   - **Primary category**: Health & Fitness (Productivity is a reasonable second choice)
   - **Age rating**: should qualify for 4+ — no objectionable content, no user-generated content, no web browsing
   - **Bundle ID**: `com.dries.temporep` (already set in the Xcode project — register this exact ID in your developer account)
-- [ ] **Code signing**: set your Team under *Signing & Capabilities* in Xcode (currently unset in the project, since this was built without an Apple Developer account attached) before you can archive and upload a build.
+- [ ] **Code signing and TestFlight**: see **[TESTFLIGHT.md](TESTFLIGHT.md)**. There's now a `TestFlight` GitHub Actions workflow that archives, signs and uploads a build; it needs an Apple Developer account, an App Store Connect API key and a distribution certificate, all of which that document walks through. `DEVELOPMENT_TEAM` stays empty in the committed project on purpose — CI supplies it from a secret, so your Team ID isn't published in a public repo.
 - [ ] **App icon**: already done (`Assets.xcassets/AppIcon.appiconset`) — no action needed.
 
 ## Screenshots — flagged separately
