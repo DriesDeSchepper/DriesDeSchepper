@@ -41,6 +41,11 @@ struct LocalizationCatalogTests {
             L("Rep direction", locale),
             L("Reverse Direction", locale),
             L("Recommended", locale),
+            L("tempo.control", locale),
+            L("tempo.hold", locale),
+            L("tempo.drive", locale),
+            L("phase.concentric.title", locale),
+            L("phase.pause.title", locale),
             L("phase.getReady.title", locale),
             L("phase.eccentric.voice", locale),
             L("phase.pause.voice", locale),
@@ -55,6 +60,21 @@ struct LocalizationCatalogTests {
     @Test func voiceCuePhrasesAreDistinctPerLanguage() {
         let words = ["en", "nl", "fr", "de"].map { L("phase.eccentric.voice", Locale(identifier: $0)) }
         #expect(Set(words).count == 4, "expected 4 distinct translations, got \(words)")
+    }
+
+    /// The rep-phase cues were renamed away from direction words
+    /// (Down/Up), which are wrong on any exercise using Reverse Direction.
+    @Test func repPhaseVoiceCuesAreDirectionAgnostic() {
+        for code in ["en", "nl", "fr", "de"] {
+            let locale = Locale(identifier: code)
+            let control = L("phase.eccentric.voice", locale)
+            let drive = L("phase.concentric.voice", locale)
+            #expect(!control.isEmpty && !drive.isEmpty)
+            #expect(control != drive, "control and drive must not collide in \(code)")
+        }
+        #expect(L("phase.eccentric.voice", Locale(identifier: "en")) == "Control")
+        #expect(L("phase.concentric.voice", Locale(identifier: "en")) == "Drive")
+        #expect(L("phase.pause.voice", Locale(identifier: "en")) == "Hold")
     }
 
     @Test func switchSidesVoiceMatchesSpecifiedPhrasing() {

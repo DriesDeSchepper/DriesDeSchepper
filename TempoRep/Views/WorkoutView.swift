@@ -1,14 +1,11 @@
 import SwiftUI
 import UIKit
 
-/// Deliberately always dark, regardless of the system appearance — unlike
-/// every other screen in the app. The countdown display is designed to be
-/// read at a glance across a gym floor, and a bright white flash mid-set
-/// (if the workout screen simply inherited light mode) would be actively
-/// unpleasant and would blow out the display's contrast. See
-/// `.preferredColorScheme(.dark)` below.
+/// Follows the system appearance like every other screen. Legibility
+/// across a gym floor comes from scale and contrast — a huge numeral and a
+/// full-bleed phase color — rather than from forcing a dark ground.
 ///
-/// This is also the only screen that allows landscape — the phone is
+/// This is the only screen that allows landscape — the phone is
 /// often propped up on a shelf or in a stand mid-set. Every other screen
 /// stays portrait-only; see `OrientationLock`, which this view toggles on
 /// appear/disappear.
@@ -17,7 +14,8 @@ struct WorkoutView: View {
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @State private var completionAnimated = false
+    /// When the finish screen appeared, for the count-up below.
+    @State private var finishedAt: Date?
     @State private var phaseFlashOpacity: Double = 0
     @ScaledMetric(relativeTo: .largeTitle) private var countdownSize = TempoMetrics.Display.countdown
     @ScaledMetric(relativeTo: .title) private var countdownSizeCompact = TempoMetrics.Display.countdownCompact
@@ -26,21 +24,60 @@ struct WorkoutView: View {
 
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
 
-    /// Eccentric (lowering) and get-ready each get their own deliberate
-    /// color; every other phase — concentric included — uses the regular
-    /// accent. Applied to the phase title and the ring's progress arc; the
-    /// countdown digit itself stays neutral white regardless of phase.
+    /// The phase triad — control / hold / drive. Waiting phases stay
+    /// neutral on purpose: resting isn't part of the rep, so giving it a
+    /// fourth hue would dilute what the three real phase colors mean.
+    /// Signal (the brand accent) deliberately never appears here.
     private var phaseAccentColor: Color {
         switch engine.currentPhase {
-        case .eccentric: return .tempoEccentric
-        case .getReady: return .tempoGetReady
-        default: return .accentColor
+        case .eccentric: return .tempoControl
+        case .pauseBottom, .pauseTop: return .tempoHold
+        case .concentric: return .tempoDrive
+        default: return .tempoWaiting
+        }
+    }
+
+    /// The four phases that make up a rep. These get the pacing track;
+    /// get-ready / rest / switch-side are waiting phases and keep the
+    /// countdown ring, which is what a plain "time until the next thing"
+    /// countdown wants to look like.
+    private var isRepPhase: Bool {
+        switch engine.currentPhase {
+        case .eccentric, .pauseBottom, .concentric, .pauseTop: return true
+        default: return false
+        }
+    }
+
+    /// Swaps the screen's centrepiece. During a rep the full-bleed field
+    /// behind everything already carries the progress, so the centre only
+    /// needs the seconds remaining and the four tempo values. While
+    /// waiting, the countdown ring returns — a ring is the right shape for
+    /// "time until the next thing", which is all a rest is.
+    @ViewBuilder
+    private func centrepiece(ringDiameter: CGFloat, digitSize: CGFloat, compact: Bool) -> some View {
+        if isRepPhase {
+            VStack(spacing: compact ? Spacing.xs : Spacing.sm) {
+                Text(verbatim: countdownText)
+                    .font(.system(size: digitSize, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.tempoPrimaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(TempoScaleFactor.display)
+                TempoDigitRow(engine: engine, phaseColor: phaseAccentColor, isCompact: compact)
+            }
+        } else {
+            ring(diameter: ringDiameter, digitSize: digitSize)
         }
     }
 
     var body: some View {
         ZStack {
-            Color.tempoWorkoutBackground.ignoresSafeArea()
+            Color.tempoBackground.ignoresSafeArea()
+            // The pacing field is a full-bleed layer beneath the readout,
+            // not a sibling in the stack — see TempoPacingView's note.
+            if isRepPhase, engine.state != .finished {
+                TempoPacingView(engine: engine, phaseColor: phaseAccentColor)
+            }
             if engine.state == .finished {
                 finishedView
             } else {
@@ -62,7 +99,6 @@ struct WorkoutView: View {
             .allowsHitTesting(false)
             .ignoresSafeArea(edges: .top)
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             OrientationLock.mask = .all
             OrientationLock.apply()
@@ -133,7 +169,9 @@ struct WorkoutView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, Spacing.xs)
 
-            ring(diameter: TempoMetrics.ringDiameter, digitSize: countdownSize)
+            centrepiece(ringDiameter: TempoMetrics.ringDiameter,
+                        digitSize: countdownSize,
+                        compact: false)
                 .padding(.top, Spacing.xxl)
 
             Spacer()
@@ -180,7 +218,9 @@ struct WorkoutView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            ring(diameter: TempoMetrics.compactRingDiameter, digitSize: countdownSizeCompact)
+            centrepiece(ringDiameter: TempoMetrics.compactRingDiameter,
+                        digitSize: countdownSizeCompact,
+                        compact: true)
         }
         .padding(.horizontal, Spacing.xl)
         .padding(.vertical, Spacing.md)
@@ -189,7 +229,7 @@ struct WorkoutView: View {
     private func ring(diameter: CGFloat, digitSize: CGFloat) -> some View {
         ZStack {
             Circle()
-                .stroke(Color.tempoOnDarkSurface, lineWidth: TempoMetrics.ringLineWidth)
+                .stroke(Color.tempoSunken, lineWidth: TempoMetrics.ringLineWidth)
             Circle()
                 .trim(from: 0, to: max(0.001, 1 - engine.phaseProgress))
                 .stroke(phaseAccentColor, style: StrokeStyle(lineWidth: TempoMetrics.ringLineWidth, lineCap: .round))
@@ -248,8 +288,8 @@ struct WorkoutView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.lg)
             }
-            .background(Color.tempoOnDarkSurfaceRaised, in: Capsule())
-            .foregroundStyle(Color.tempoOnDark)
+            .background(Color.tempoSunken, in: Capsule())
+            .foregroundStyle(Color.tempoPrimaryText)
         }
     }
 
@@ -263,41 +303,36 @@ struct WorkoutView: View {
                 portraitFinishedView
             }
         }
-        .onAppear {
-            withAnimation(TempoAnimation.celebration(reduceMotion: reduceMotion)) {
-                completionAnimated = true
+        .onAppear { finishedAt = Date() }
+    }
+
+    /// The finish screen's single motion beat: time under tension counts up
+    /// from zero. It's the number the whole workout produced, so watching it
+    /// accumulate reads as earning it rather than being told it.
+    ///
+    /// Driven by a `TimelineView` clock rather than `withAnimation`, because
+    /// SwiftUI interpolates a view's *layout*, not the string inside a
+    /// `Text` — the number has to be recomputed per frame to visibly climb.
+    @ViewBuilder
+    private var timeUnderTensionStat: some View {
+        let total = engine.lastTimeUnderTension
+        if reduceMotion {
+            StatBlock(value: Self.mmss(total), label: "Time under tension", size: heroStatSize)
+        } else {
+            TimelineView(.animation) { context in
+                let elapsed = finishedAt.map { context.date.timeIntervalSince($0) } ?? 0
+                let fraction = min(1, max(0, elapsed / TempoAnimation.countUpDuration))
+                // Ease-out so it decelerates onto the final figure instead
+                // of stopping dead.
+                let eased = 1 - pow(1 - fraction, 3)
+                StatBlock(value: Self.mmss(total * eased),
+                          label: "Time under tension",
+                          size: heroStatSize)
             }
         }
     }
 
-    private var checkmarkBadge: some View {
-        ZStack {
-            Circle()
-                .fill(Color.accentColor.opacity(TempoOpacity.badgeFill))
-                .frame(width: TempoMetrics.completionBadgeDiameter, height: TempoMetrics.completionBadgeDiameter)
-            Image(systemName: "checkmark")
-                .font(.system(size: TempoMetrics.Icon.celebration, weight: .bold))
-                .foregroundStyle(Color.accentColor)
-        }
-        // Reduce Motion: skip the scale entirely, keep only the fade — a
-        // crossfade instead of a "pop in" motion.
-        .scaleEffect(reduceMotion ? 1 : (completionAnimated ? 1 : 0.4))
-        .opacity(completionAnimated ? 1 : 0)
-        .accessibilityHidden(true)
-    }
-
-    private var timeUnderTensionBlock: some View {
-        VStack(spacing: Spacing.xs) {
-            Text(verbatim: Self.mmss(engine.lastTimeUnderTension))
-                .font(TempoFont.rounded(.title, weight: .bold))
-                .monospacedDigit()
-                .foregroundStyle(Color.tempoOnDark)
-            Text("under tension")
-                .font(TempoFont.rounded(.caption, weight: .medium))
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
+    private var heroStatSize: StatBlock.Size { isCompactHeight ? .large : .hero }
 
     private var continueButton: some View {
         Button {
@@ -315,77 +350,73 @@ struct WorkoutView: View {
     }
 
     private var portraitFinishedView: some View {
-        VStack(spacing: Spacing.lg) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
             Spacer()
 
-            checkmarkBadge
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                Text("Workout complete")
+                    .font(TempoFont.rounded(.caption2, weight: .semibold))
+                    .tracking(TempoTracking.label)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.accentColor)
+                if let name = engine.lastExerciseName {
+                    Text(verbatim: name)
+                        .font(TempoFont.rounded(.title, weight: .heavy))
+                        .lineLimit(2)
+                }
+            }
 
-            Text(verbatim: Phase.done.title(locale))
-                .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
-                .tracking(TempoTracking.title)
-                .foregroundStyle(Color.accentColor)
+            // Time under tension is what tempo training actually produces,
+            // and nothing else in the app reports it — so it's the
+            // headline rather than a footnote.
+            timeUnderTensionStat
 
-            Text(verbatim: summaryText)
-                .font(TempoFont.rounded(.body, weight: .medium))
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(Text(verbatim: accessibleSummaryText))
+            Divider().overlay(Color.tempoRule)
 
-            timeUnderTensionBlock
-                .padding(.top, Spacing.xs)
+            HStack(alignment: .top, spacing: Spacing.xl) {
+                StatBlock(value: "\(engine.config.sets * engine.config.repsPerSet)", label: "stat.reps")
+                StatBlock(value: "\(engine.config.sets)", label: "stat.sets")
+                StatBlock(value: engine.config.tempoString, label: "Tempo")
+            }
 
             Spacer()
 
             continueButton
-                .padding(.horizontal, Spacing.xl)
                 .padding(.bottom, Spacing.xl)
         }
+        .padding(.horizontal, Spacing.xl)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var landscapeFinishedView: some View {
-        HStack(spacing: Spacing.xxl) {
-            VStack(spacing: Spacing.sm) {
-                checkmarkBadge
-                    .scaleEffect(0.7) // fits a compact-height screen alongside the summary column
-                Text(verbatim: Phase.done.title(locale))
-                    .font(.system(size: finishedTitleSize, weight: .heavy, design: .rounded))
-                    .tracking(TempoTracking.title)
+        HStack(alignment: .center, spacing: Spacing.xxl) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                Text("Workout complete")
+                    .font(TempoFont.rounded(.caption2, weight: .semibold))
+                    .tracking(TempoTracking.label)
+                    .textCase(.uppercase)
                     .foregroundStyle(Color.accentColor)
-                    .minimumScaleFactor(TempoScaleFactor.finishedTitle)
-                    .lineLimit(1)
+                if let name = engine.lastExerciseName {
+                    Text(verbatim: name)
+                        .font(TempoFont.rounded(.title2, weight: .heavy))
+                        .lineLimit(2)
+                }
+                timeUnderTensionStat
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: Spacing.md) {
-                Text(verbatim: summaryText)
-                    .font(TempoFont.rounded(.body, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(Text(verbatim: accessibleSummaryText))
-                timeUnderTensionBlock
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                HStack(alignment: .top, spacing: Spacing.lg) {
+                    StatBlock(value: "\(engine.config.sets * engine.config.repsPerSet)", label: "stat.reps")
+                    StatBlock(value: "\(engine.config.sets)", label: "stat.sets")
+                    StatBlock(value: engine.config.tempoString, label: "Tempo")
+                }
                 continueButton
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.xl)
         .padding(.vertical, Spacing.md)
-    }
-
-    private var summaryText: String {
-        let sets = engine.config.sets
-        let reps = engine.config.repsPerSet
-        let setsWord = L(sets == 1 ? "workout.set" : "workout.sets", locale)
-        let repsWord = L(reps == 1 ? "workout.rep" : "workout.reps", locale)
-        return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(engine.config.tempoString)"
-    }
-
-    /// `summaryText` with a plain dash-separated tempo reading instead of
-    /// the arrow/dot notation, which VoiceOver doesn't reliably speak.
-    private var accessibleSummaryText: String {
-        let sets = engine.config.sets
-        let reps = engine.config.repsPerSet
-        let setsWord = L(sets == 1 ? "workout.set" : "workout.sets", locale)
-        let repsWord = L(reps == 1 ? "workout.rep" : "workout.reps", locale)
-        let tempo = tempoAccessibilityReading(engine.config.tempoDigits)
-        return "\(sets) \(setsWord) · \(reps) \(repsWord) @ \(tempo)"
     }
 
     /// Under a minute, "0:15" reads ambiguously — spell out the unit

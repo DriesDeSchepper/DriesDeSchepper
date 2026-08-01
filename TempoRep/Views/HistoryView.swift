@@ -49,42 +49,48 @@ struct HistoryView: View {
         List {
             ForEach(store.records) { record in
                 row(for: record)
+                    .listRowInsets(EdgeInsets(top: Spacing.md, leading: Spacing.lg,
+                                              bottom: Spacing.md, trailing: Spacing.lg))
             }
             .onDelete { store.delete(at: $0) }
         }
+        .listStyle(.plain)
     }
 
+    /// A feed card rather than a text row: the stats read as figures, and
+    /// the tempo shape makes two sessions of the same lift comparable at a
+    /// glance — a slow eccentric with an explosive drive looks visibly
+    /// different from an even 3-0-3-0, which a digit string never showed.
     private func row(for record: WorkoutRecord) -> some View {
-        HStack(alignment: .center, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                if let exerciseName = record.exerciseName {
-                    Text(verbatim: exerciseName)
-                        .font(TempoFont.rounded(.subheadline, weight: .semibold))
-                        .lineLimit(1)
-                }
-                HStack(spacing: Spacing.sm) {
-                    Text(record.tempoString)
-                        .font(TempoFont.rounded(.title3, weight: .bold))
-                        .monospacedDigit()
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityLabel(Text(verbatim: tempoAccessibilityReading(record.tempoDigits)))
-                    Text("\(record.sets)×\(record.repsPerSet)")
-                        .font(TempoFont.rounded(.body, weight: .semibold))
-                        .monospacedDigit()
-                }
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(verbatim: record.exerciseName ?? L("No exercise selected", locale))
+                    .font(TempoFont.rounded(.headline, weight: .bold))
+                    .lineLimit(1)
+                Spacer(minLength: Spacing.sm)
                 Text(verbatim: record.date.formatted(
                     Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale)))
-                    .font(TempoFont.rounded(.footnote))
+                    .font(TempoFont.rounded(.caption2, weight: .semibold))
+                    .tracking(TempoTracking.label)
+                    .textCase(.uppercase)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: Spacing.xs) {
-                Text(Self.formatTimeUnderTension(record.timeUnderTension))
-                    .font(TempoFont.rounded(.body, weight: .bold))
-                    .monospacedDigit()
-                Text("under tension")
-                    .font(TempoFont.rounded(.caption2))
-                    .foregroundStyle(.secondary)
+
+            HStack(alignment: .bottom, spacing: Spacing.xl) {
+                StatBlock(value: Self.formatTimeUnderTension(record.timeUnderTension),
+                          label: "stat.underTension")
+                StatBlock(value: "\(record.sets)×\(record.repsPerSet)", label: "stat.volume")
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: Spacing.xs) {
+                    TempoShape(digits: record.tempoDigits)
+                        .frame(width: TempoMetrics.tempoShapeWidth)
+                    Text(verbatim: record.tempoString)
+                        .font(TempoFont.rounded(.caption2, weight: .semibold))
+                        .tracking(TempoTracking.label)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, Spacing.xs)
