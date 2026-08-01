@@ -120,13 +120,13 @@ struct SetupView: View {
             // the row with the info button (as this used to) pushed them
             // off-center to make room for it.
             HStack(spacing: Spacing.lg) {
-                DigitStepper(label: "ECC", accessibilityName: "Eccentric duration",
+                DigitStepper(label: "tempo.control", accessibilityName: "Eccentric duration",
                              digit: $engine.config.tempoDigits[0])
-                DigitStepper(label: "PAUSE", accessibilityName: "Pause at bottom duration",
+                DigitStepper(label: "tempo.hold", accessibilityName: "Pause at bottom duration",
                              digit: $engine.config.tempoDigits[1])
-                DigitStepper(label: "CON", accessibilityName: "Concentric duration",
+                DigitStepper(label: "tempo.drive", accessibilityName: "Concentric duration",
                              digit: $engine.config.tempoDigits[2])
-                DigitStepper(label: "PAUSE", accessibilityName: "Pause at top duration",
+                DigitStepper(label: "tempo.hold", accessibilityName: "Pause at top duration",
                              digit: $engine.config.tempoDigits[3])
             }
             .frame(maxWidth: .infinity)
@@ -186,7 +186,7 @@ struct SetupView: View {
                             .font(TempoFont.rounded(.subheadline, weight: .bold))
                             .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
                     }
-                    .background(Color.tempoSurfaceRaised, in: Circle())
+                    .background(Color.tempoSunken, in: Circle())
                     .foregroundStyle(Color.accentColor)
                     .accessibilityLabel(Text("Save current settings as a preset"))
                 }
@@ -360,7 +360,7 @@ private struct PresetChip: View {
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.md)
         }
-        .background(Color.tempoSurfaceRaised, in: Capsule())
+        .background(Color.tempoSunken, in: Capsule())
         .foregroundStyle(.primary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [
@@ -396,7 +396,7 @@ private struct DigitStepper: View {
                 .minimumScaleFactor(TempoScaleFactor.digit)
                 .lineLimit(1)
                 .frame(width: TempoMetrics.digitBoxWidth, height: TempoMetrics.digitBoxHeight)
-                .background(Color.tempoSurfaceRaised, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
+                .background(Color.tempoSunken, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
 
             Button {
                 decrement()
@@ -429,8 +429,10 @@ private struct DigitStepper: View {
         }
     }
 
-    private func increment() { digit = min(9, digit + 0.5) }
-    private func decrement() { digit = max(0, digit - 0.5) }
+    // Whole seconds only — tempo prescriptions are written in whole
+    // seconds, and half-steps made the digit box read as false precision.
+    private func increment() { digit = min(9, digit.rounded(.down) + 1) }
+    private func decrement() { digit = max(0, digit.rounded(.up) - 1) }
 }
 
 private struct CounterRow: View {
@@ -452,7 +454,7 @@ private struct CounterRow: View {
                 Image(systemName: "minus")
                     .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
-                    .background(Color.tempoSurfaceRaised, in: Circle())
+                    .background(Color.tempoSunken, in: Circle())
             }
             .foregroundStyle(.primary)
             .accessibilityHidden(true)
@@ -468,7 +470,7 @@ private struct CounterRow: View {
                 Image(systemName: "plus")
                     .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
                     .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
-                    .background(Color.tempoSurfaceRaised, in: Circle())
+                    .background(Color.tempoSunken, in: Circle())
             }
             .foregroundStyle(.primary)
             .accessibilityHidden(true)

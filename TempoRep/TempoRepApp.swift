@@ -11,11 +11,8 @@ struct TempoRepApp: App {
     }
 }
 
-/// No forced color scheme here — Setup, Settings, History, and the
-/// exercise picker follow the system appearance (see `Color.tempoBackground`
-/// in DesignSystem.swift). The splash and workout screens are the
-/// deliberate exceptions and force dark themselves; see their own
-/// `.preferredColorScheme(.dark)`.
+/// No forced color scheme anywhere: every screen follows the system
+/// appearance, resolving through the tokens in DesignSystem.swift.
 struct RootView: View {
     @State private var engine = WorkoutEngine()
     @State private var showSplash = true

@@ -2327,25 +2327,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "hoch"
+            "value": "explosiv"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "lift"
+            "value": "explode"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "monte"
+            "value": "explose"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "omhoog"
+            "value": "explosief"
           }
         }
       }
@@ -2356,25 +2356,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "KONZENTRISCH"
+            "value": "DRÜCKEN"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "CONCENTRIC"
+            "value": "DRIVE"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "CONCENTRIQUE"
+            "value": "POUSSE"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "CONCENTRISCH"
+            "value": "DRUK"
           }
         }
       }
@@ -2385,25 +2385,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hoch"
+            "value": "Drücken"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Up"
+            "value": "Drive"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Monte"
+            "value": "Pousse"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Omhoog"
+            "value": "Druk"
           }
         }
       }
@@ -2501,25 +2501,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "runter"
+            "value": "langsam und kontrolliert"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "lower"
+            "value": "slow and controlled"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "descends"
+            "value": "lent et contrôlé"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "zakken"
+            "value": "traag en gecontroleerd"
           }
         }
       }
@@ -2530,25 +2530,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "EXZENTRISCH"
+            "value": "KONTROLLE"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "ECCENTRIC"
+            "value": "CONTROL"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "EXCENTRIQUE"
+            "value": "CONTRÔLE"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "EXCENTRISCH"
+            "value": "CONTROLE"
           }
         }
       }
@@ -2559,25 +2559,25 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Runter"
+            "value": "Kontrolle"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Down"
+            "value": "Control"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Descends"
+            "value": "Contrôle"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zakken"
+            "value": "Controle"
           }
         }
       }
@@ -2681,13 +2681,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "hold"
+            "value": "hold it"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "tiens"
+            "value": "maintiens"
           }
         },
         "nl": {
@@ -2710,19 +2710,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "PAUSE"
+            "value": "HOLD"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "PAUSE"
+            "value": "TIENS"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "PAUZE"
+            "value": "HOUD"
           }
         }
       }
@@ -2751,7 +2751,7 @@
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vasthouden"
+            "value": "Houd"
           }
         }
       }
@@ -2955,6 +2955,93 @@
           "stringUnit": {
             "state": "translated",
             "value": "tempo trainingstimer"
+          }
+        }
+      }
+    },
+    "tempo.control": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrolle"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contrôle"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Controle"
+          }
+        }
+      }
+    },
+    "tempo.drive": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drücken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drive"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pousse"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Druk"
+          }
+        }
+      }
+    },
+    "tempo.hold": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiens"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd"
           }
         }
       }

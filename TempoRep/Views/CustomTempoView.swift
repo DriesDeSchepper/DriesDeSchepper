@@ -14,13 +14,13 @@ struct CustomTempoView: View {
         NavigationStack {
             Form {
                 Section {
-                    PhaseRow(title: "Eccentric", accessibilityTitle: "Eccentric duration",
+                    PhaseRow(title: "tempo.control", accessibilityTitle: "Eccentric duration",
                              description: "Lower the weight and lengthen the muscle",
                              value: $engine.config.tempoDigits[0])
                     PhaseRow(title: "Bottom Pause", accessibilityTitle: "Pause at bottom duration",
                              description: "Hold at the bottom",
                              value: $engine.config.tempoDigits[1])
-                    PhaseRow(title: "Concentric", accessibilityTitle: "Concentric duration",
+                    PhaseRow(title: "tempo.drive", accessibilityTitle: "Concentric duration",
                              description: "Lift the weight and contract the muscle",
                              value: $engine.config.tempoDigits[2])
                     PhaseRow(title: "Top Pause", accessibilityTitle: "Pause at top duration",
@@ -128,12 +128,13 @@ private struct PhaseRow: View {
             }
         }
         .foregroundStyle(.primary)
-        .background(Color.tempoSurfaceRaised, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
+        .background(Color.tempoSunken, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
         .accessibilityHidden(true)
     }
 
-    private func increment() { value = min(9, value + 0.5) }
-    private func decrement() { value = max(0, value - 0.5) }
+    // Whole seconds only — see the matching note in SetupView.
+    private func increment() { value = min(9, value.rounded(.down) + 1) }
+    private func decrement() { value = max(0, value.rounded(.up) - 1) }
 }
 
 #Preview {

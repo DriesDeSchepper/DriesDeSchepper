@@ -1,76 +1,94 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Color
 
-/// Every color in the app derives from one of these. There is exactly one
-/// accent color (defined once, in Assets.xcassets/AccentColor) — everything
-/// else is a semantic role, not a literal RGB value, so it can adapt to
-/// light/dark mode (and to any future accent-color change) from one place.
+/// A dynamic color resolved per appearance, so a single token carries both
+/// its light and dark value. Used instead of Asset Catalog colorsets so the
+/// entire palette stays readable in one file — the whole point of this
+/// being *the* token file.
+private func adaptive(light: UInt32, dark: UInt32) -> Color {
+    Color(uiColor: UIColor { traits in
+        UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light)
+    })
+}
+
+private extension UIColor {
+    convenience init(rgb: UInt32) {
+        self.init(
+            red: CGFloat((rgb >> 16) & 0xFF) / 255,
+            green: CGFloat((rgb >> 8) & 0xFF) / 255,
+            blue: CGFloat(rgb & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+}
+
+/// Every color in the app derives from one of these — a semantic role, not
+/// a literal RGB value used at a call site.
 ///
-/// `background`/`surface`/`primaryText`/`secondaryText` resolve via system
-/// semantic colors, so Setup, Settings, History, and the exercise picker
-/// follow the user's system appearance automatically. The workout screen
-/// (`WorkoutView`) and the launch splash are the one deliberate exception:
-/// they force dark regardless of system setting, because the giant
-/// countdown display is designed to be read at a glance from across a gym,
-/// and a sudden white flash mid-set would be actively hostile. That's
-/// requested explicitly via `Color.tempoWorkoutBackground` / `.tempoOnDark`,
-/// never by accident — see `WorkoutView.body`'s `.preferredColorScheme(.dark)`.
+/// ## Two palettes that never co-star
+///
+/// **Signal** (the accent, in Assets.xcassets/AccentColor) owns setup,
+/// history and calls to action. The **phase triad** — control / hold /
+/// drive — owns a live rep, and while one is showing the surrounding
+/// controls drop to neutral ink. Two saturated colors never compete on the
+/// same screen; that restraint is the whole design system, and it's what
+/// keeps a phase color unmissable from across a gym.
+///
+/// ## Light-first
+///
+/// Every screen follows the system appearance, including the workout
+/// screen and splash, which previously forced dark. Each token below
+/// therefore carries a deliberate value on both grounds rather than being
+/// derived by inversion.
 extension Color {
-    /// Screen background for light/dark-adaptive screens.
-    static let tempoBackground = Color(.systemBackground)
-    /// A raised card/row, one step above the background.
-    static let tempoSurface = Color.primary.opacity(0.06)
-    /// A slightly more prominent raised surface (chips, steppers, filled controls).
-    static let tempoSurfaceRaised = Color.primary.opacity(0.10)
+    // MARK: Ground and structure
+
+    /// The page itself. Slightly off pure white / pure black, biased cool
+    /// toward the ink so the neutrals read as chosen rather than default.
+    static let tempoBackground = adaptive(light: 0xFBFBFC, dark: 0x0B0C0F)
+    /// A raised card sitting above the background.
+    static let tempoSurface = adaptive(light: 0xFFFFFF, dark: 0x14161B)
+    /// An inset well — the opposite move from `tempoSurface`. Used for
+    /// stat tiles and stepper fields that should read as recessed.
+    static let tempoSunken = adaptive(light: 0xF2F3F6, dark: 0x1D2027)
+    /// Hairline dividers and control borders.
+    static let tempoRule = adaptive(light: 0xE3E5EA, dark: 0x23262E)
 
     static let tempoPrimaryText = Color.primary
     static let tempoSecondaryText = Color.secondary
 
+    // MARK: Brand
+
+    /// Text and glyphs on an accent-colored fill. The accent is dark enough
+    /// in light mode to take white, and light enough in dark mode to need
+    /// near-black — so this genuinely inverts rather than staying fixed.
+    static let tempoOnAccent = adaptive(light: 0xFFFFFF, dark: 0x1A0209)
+
+    // MARK: Phase triad
+
+    /// Eccentric — the controlled, yielding half of the rep.
+    static let tempoControl = adaptive(light: 0x7A3BEA, dark: 0xA47BFF)
+    /// Either isometric hold, at the stretched or contracted end.
+    static let tempoHold = adaptive(light: 0xC77700, dark: 0xFFB020)
+    /// Concentric — the driving, overcoming half.
+    static let tempoDrive = adaptive(light: 0x00934A, dark: 0x22C97A)
+    /// Get-ready, rest and side-switch. Deliberately *not* a fourth hue:
+    /// waiting isn't a phase of the rep, so it stays neutral and lets the
+    /// triad mean something.
+    static let tempoWaiting = Color.secondary
+
+    // MARK: Semantic
+
     static let tempoDestructive = Color.red
-    /// Reserved for future positive/success states (e.g. a new personal
-    /// best); not yet used anywhere, defined now so one doesn't get
-    /// invented ad hoc later.
+    /// Reserved for future positive states (e.g. a personal best); defined
+    /// now so one doesn't get invented ad hoc later.
     static let tempoSuccess = Color.green
-
-    /// Text and glyphs sitting *on top of* an accent-colored fill (the
-    /// START / Pause / Continue buttons). Fixed black rather than
-    /// `.primary`: the accent is a bright, saturated color in both
-    /// appearances, and black clears WCAG AA contrast against either of
-    /// AccentColor's light/dark variants, where `.primary` would invert
-    /// to white in dark mode and fail.
-    static let tempoOnAccent = Color.black
-    /// The filled favorite star. Deliberately *not* the accent color —
-    /// a star being yellow is a near-universal convention, and using the
-    /// accent here would make favorited rows read as "selected" instead.
-    static let tempoFavorite = Color.yellow
-
-    /// Fixed black background for the always-dark screens (workout, splash).
-    /// Deliberately a literal, not `.tempoBackground` — those screens never
-    /// follow the system appearance.
-    static let tempoWorkoutBackground = Color.black
-    /// Primary text on the always-dark screens. Also a deliberate literal:
-    /// `.primary` would flip to black-on-black if a future screen using
-    /// this token ever inherited a light color scheme by mistake.
-    static let tempoOnDark = Color.white
-    /// Raised surfaces on the always-dark screens (the progress ring's
-    /// track, the Stop button) — fixed-white-based, unlike `.tempoSurface`,
-    /// since these never adapt.
-    static let tempoOnDarkSurface = Color.white.opacity(0.1)
-    static let tempoOnDarkSurfaceRaised = Color.white.opacity(0.12)
-
-    /// The one deliberate second brand color, workout-screen-only: the
-    /// eccentric (lowering) phase is tinted violet instead of the regular
-    /// accent green, so the two halves of a rep read apart at a glance —
-    /// concentric (lifting) keeps using the regular `.accentColor`, since
-    /// that's already green and "lifting" is the phase the accent color
-    /// was chosen around. Named and defined once here for the same reason
-    /// every other color is: so nothing reinvents this shade ad hoc.
-    static let tempoEccentric = Color(red: 0.55, green: 0.35, blue: 1.0)
-    /// The get-ready countdown's color — distinct from both rep-phase
-    /// colors above so "you're about to start" reads as its own state,
-    /// not a third variant of eccentric/concentric.
-    static let tempoGetReady = Color(red: 0.3, green: 0.55, blue: 1.0)
+    /// The filled favorite star. Deliberately not the accent — a yellow
+    /// star is near-universal, and using Signal here would make favorited
+    /// rows read as "selected" instead.
+    static let tempoFavorite = adaptive(light: 0xE0A200, dark: 0xFFCC33)
 }
 
 // MARK: - Spacing
@@ -138,36 +156,31 @@ enum TempoMetrics {
     /// label rather than filling the row.
     static let sidePickerWidth: CGFloat = 160
 
-    // MARK: Tempo pacing track
+    // MARK: Tempo pacing field
 
-    /// The vertical track the pacing dot rides during a rep — see
+    /// The full-bleed colour field that renders a rep — see
     /// `TempoPacingView`.
     enum Pacing {
-        static let trackWidth: CGFloat = 6
-        static let trackHeight: CGFloat = 260
-        /// Landscape's constraint is height, so the track shortens rather
-        /// than the layout scrolling.
-        static let trackHeightCompact: CGFloat = 150
-        static let dotDiameter: CGFloat = 26
-        static let dotDiameterCompact: CGFloat = 20
-        /// Neon bloom around the dot: a tight inner glow plus a wider,
+        /// The bright line marking the lifted weight's position. Thin
+        /// enough to read as a precise edge rather than a band.
+        static let edgeThickness: CGFloat = 4
+        /// Neon bloom on the edge: a tight inner glow plus a wider,
         /// fainter outer one, which is what keeps it reading as neon
         /// rather than as a drop shadow.
         static let glowRadius: CGFloat = 16
         static let glowRadiusOuter: CGFloat = 32
-        /// The lit digit's glow — smaller, since the glyph is smaller.
-        static let glowRadiusDigit: CGFloat = 8
         /// Relative strength of the outer bloom against the inner one.
         static let outerGlowFactor: Double = 0.6
-        /// How much the dot swells at the moment a phase changes.
-        static let dotPopScale: CGFloat = 1.35
+
+        /// How much the edge swells at the moment a phase changes.
+        static let edgeSwellScale: CGFloat = 2.2
         /// Peak extra scale on an isometric hold's pulse.
-        static let holdPulseAmplitude: CGFloat = 0.14
+        static let holdPulseAmplitude: CGFloat = 0.35
         /// Isometric hold pulse rate, in cycles per second. Deliberately
         /// close to a calm breathing cadence — this marks "hold still",
         /// so it should not read as urgency.
         static let holdPulseHz: Double = 0.8
-        /// How much the active tempo digit grows over the inactive three.
+        /// How much the active tempo value grows over the inactive three.
         static let activeDigitScale: CGFloat = 1.3
 
         // The phase-start swell is a damped oscillation rather than a
@@ -176,13 +189,13 @@ enum TempoMetrics {
         // many times it rings before settling.
         static let popDecayRate: Double = 7
         static let popWobbleHz: Double = 2.5
-        /// Floor on the dot's scale, so the oscillation's undershoot can
-        /// never collapse it.
-        static let minDotScale: CGFloat = 0.85
+        /// Floor on the edge's scale, so the oscillation's undershoot can
+        /// never collapse it to nothing.
+        static let minEdgeScale: CGFloat = 0.6
 
-        /// Concentric durations at or above this many seconds are treated
-        /// as "controlled" and get no ease-out at all — the lift should
-        /// look as measured as it's meant to be performed. Below it, the
+        /// Drive durations at or above this many seconds are treated as
+        /// "controlled" and get no ease-out at all — the lift should look
+        /// as measured as it's meant to be performed. Below it, the
         /// ease-out fades in proportionally.
         static let explosiveThresholdSeconds: Double = 2
     }
@@ -230,9 +243,13 @@ enum TempoOpacity {
     static let badgeFill: Double = 0.15
     /// The three tempo digits that aren't the phase currently running.
     static let inactiveDigit: Double = 0.3
-    /// The pacing track's unfilled portion.
-    static let pacingTrack: Double = 0.12
-    /// The pacing dot's neon bloom at full intensity.
+    /// The pacing field, at its densest (against the bottom edge) and
+    /// its faintest (just under the moving edge line). Deliberately low:
+    /// the numerals sit on top of this and must stay legible at every
+    /// fill level, on both grounds.
+    static let fieldBase: Double = 0.22
+    static let fieldTop: Double = 0.07
+    /// The edge line's neon bloom at full intensity.
     static let pacingGlow: Double = 0.55
 }
 

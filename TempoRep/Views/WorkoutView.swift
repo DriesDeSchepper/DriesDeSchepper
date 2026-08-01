@@ -1,14 +1,11 @@
 import SwiftUI
 import UIKit
 
-/// Deliberately always dark, regardless of the system appearance — unlike
-/// every other screen in the app. The countdown display is designed to be
-/// read at a glance across a gym floor, and a bright white flash mid-set
-/// (if the workout screen simply inherited light mode) would be actively
-/// unpleasant and would blow out the display's contrast. See
-/// `.preferredColorScheme(.dark)` below.
+/// Follows the system appearance like every other screen. Legibility
+/// across a gym floor comes from scale and contrast — a huge numeral and a
+/// full-bleed phase color — rather than from forcing a dark ground.
 ///
-/// This is also the only screen that allows landscape — the phone is
+/// This is the only screen that allows landscape — the phone is
 /// often propped up on a shelf or in a stand mid-set. Every other screen
 /// stays portrait-only; see `OrientationLock`, which this view toggles on
 /// appear/disappear.
@@ -26,15 +23,16 @@ struct WorkoutView: View {
 
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
 
-    /// Eccentric (lowering) and get-ready each get their own deliberate
-    /// color; every other phase — concentric included — uses the regular
-    /// accent. Applied to the phase title and the ring's progress arc; the
-    /// countdown digit itself stays neutral white regardless of phase.
+    /// The phase triad — control / hold / drive. Waiting phases stay
+    /// neutral on purpose: resting isn't part of the rep, so giving it a
+    /// fourth hue would dilute what the three real phase colors mean.
+    /// Signal (the brand accent) deliberately never appears here.
     private var phaseAccentColor: Color {
         switch engine.currentPhase {
-        case .eccentric: return .tempoEccentric
-        case .getReady: return .tempoGetReady
-        default: return .accentColor
+        case .eccentric: return .tempoControl
+        case .pauseBottom, .pauseTop: return .tempoHold
+        case .concentric: return .tempoDrive
+        default: return .tempoWaiting
         }
     }
 
@@ -49,17 +47,23 @@ struct WorkoutView: View {
         }
     }
 
-    /// Swaps the screen's centrepiece: the pacing track while a rep is
-    /// running, the countdown ring while waiting. Both carry the seconds
-    /// remaining, so nothing is lost in either state.
+    /// Swaps the screen's centrepiece. During a rep the full-bleed field
+    /// behind everything already carries the progress, so the centre only
+    /// needs the seconds remaining and the four tempo values. While
+    /// waiting, the countdown ring returns — a ring is the right shape for
+    /// "time until the next thing", which is all a rest is.
     @ViewBuilder
     private func centrepiece(ringDiameter: CGFloat, digitSize: CGFloat, compact: Bool) -> some View {
         if isRepPhase {
-            TempoPacingView(engine: engine,
-                            countdownText: countdownText,
-                            countdownSize: digitSize,
-                            phaseColor: phaseAccentColor,
-                            isCompact: compact)
+            VStack(spacing: compact ? Spacing.xs : Spacing.sm) {
+                Text(verbatim: countdownText)
+                    .font(.system(size: digitSize, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.tempoPrimaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(TempoScaleFactor.display)
+                TempoDigitRow(engine: engine, phaseColor: phaseAccentColor, isCompact: compact)
+            }
         } else {
             ring(diameter: ringDiameter, digitSize: digitSize)
         }
@@ -67,7 +71,12 @@ struct WorkoutView: View {
 
     var body: some View {
         ZStack {
-            Color.tempoWorkoutBackground.ignoresSafeArea()
+            Color.tempoBackground.ignoresSafeArea()
+            // The pacing field is a full-bleed layer beneath the readout,
+            // not a sibling in the stack — see TempoPacingView's note.
+            if isRepPhase, engine.state != .finished {
+                TempoPacingView(engine: engine, phaseColor: phaseAccentColor)
+            }
             if engine.state == .finished {
                 finishedView
             } else {
@@ -89,7 +98,6 @@ struct WorkoutView: View {
             .allowsHitTesting(false)
             .ignoresSafeArea(edges: .top)
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             OrientationLock.mask = .all
             OrientationLock.apply()
@@ -220,7 +228,7 @@ struct WorkoutView: View {
     private func ring(diameter: CGFloat, digitSize: CGFloat) -> some View {
         ZStack {
             Circle()
-                .stroke(Color.tempoOnDarkSurface, lineWidth: TempoMetrics.ringLineWidth)
+                .stroke(Color.tempoSunken, lineWidth: TempoMetrics.ringLineWidth)
             Circle()
                 .trim(from: 0, to: max(0.001, 1 - engine.phaseProgress))
                 .stroke(phaseAccentColor, style: StrokeStyle(lineWidth: TempoMetrics.ringLineWidth, lineCap: .round))
@@ -279,8 +287,8 @@ struct WorkoutView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.lg)
             }
-            .background(Color.tempoOnDarkSurfaceRaised, in: Capsule())
-            .foregroundStyle(Color.tempoOnDark)
+            .background(Color.tempoSunken, in: Capsule())
+            .foregroundStyle(Color.tempoPrimaryText)
         }
     }
 
@@ -322,7 +330,7 @@ struct WorkoutView: View {
             Text(verbatim: Self.mmss(engine.lastTimeUnderTension))
                 .font(TempoFont.rounded(.title, weight: .bold))
                 .monospacedDigit()
-                .foregroundStyle(Color.tempoOnDark)
+                .foregroundStyle(Color.tempoPrimaryText)
             Text("under tension")
                 .font(TempoFont.rounded(.caption, weight: .medium))
                 .foregroundStyle(.secondary)
