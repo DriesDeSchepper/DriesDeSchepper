@@ -1,0 +1,116 @@
+name: TestFlight
+
+# Manual only, deliberately. Every upload consumes a TestFlight build
+# number and emails the testers, so it should be something you decide to
+# do rather than a side effect of pushing to main.
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "beta = archive and upload · build_only = archive and sign, upload nothing"
+        type: choice
+        options: [beta, build_only]
+        default: build_only
+      changelog:
+        description: "What to Test (shown to testers; defaults to the commit subject)"
+        type: string
+        required: false
+      version:
+        description: "Marketing version override, e.g. 1.1 (default: whatever the project says)"
+        type: string
+        required: false
+      build_number:
+        description: "Build number override (default: one higher than TestFlight's latest)"
+        type: string
+        required: false
+
+# One upload at a time. Two concurrent runs would each ask App Store
+# Connect for the latest build number, get the same answer, and the
+# second upload would be rejected as a duplicate.
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-latest
+    # Waiting for Apple to finish processing is the slow part and it is
+    # worth waiting for — see the Fastfile. An hour is generous headroom.
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Build${{ inputs.lane == 'beta' && ' and upload' || '' }}
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+          DIST_CERTIFICATE_P12: ${{ secrets.DIST_CERTIFICATE_P12 }}
+          DIST_CERTIFICATE_PASSWORD: ${{ secrets.DIST_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # fastlane refuses to run under a non-UTF-8 locale.
+          LC_ALL: en_US.UTF-8
+          LANG: en_US.UTF-8
+          # Fail rather than hang forever if something does try to prompt.
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          # Workflow inputs arrive as environment variables, never
+          # interpolated into the script body: a changelog is free text,
+          # and `${{ }}` inside `run:` would let its contents execute as
+          # shell.
+          LANE: ${{ inputs.lane }}
+          IN_CHANGELOG: ${{ inputs.changelog }}
+          IN_VERSION: ${{ inputs.version }}
+          IN_BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          set -euo pipefail
+
+          case "$LANE" in
+            beta|build_only) ;;
+            *) echo "Unexpected lane: $LANE" >&2; exit 1 ;;
+          esac
+
+          # `if` rather than `[ ... ] && ...`: under `set -e` a failed
+          # test is a failed command, so the && form would abort the whole
+          # step the moment an optional input was left blank.
+          args=()
+          if [ -n "$IN_CHANGELOG" ];    then args+=("changelog:$IN_CHANGELOG"); fi
+          if [ -n "$IN_VERSION" ];      then args+=("version:$IN_VERSION"); fi
+          if [ -n "$IN_BUILD_NUMBER" ]; then args+=("build_number:$IN_BUILD_NUMBER"); fi
+
+          bundle exec fastlane ios "$LANE" "${args[@]+"${args[@]}"}"
+
+      # The build log is the only way to diagnose a first-run signing
+      # failure, and it is gone with the runner otherwise.
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            ~/Library/Logs/gym
+            ~/Library/Logs/fastlane
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Only for dry runs: on a real upload the build is already on
+      # TestFlight, and this repository is public, so there's no reason to
+      # also publish the .ipa as a downloadable artifact.
+      - name: Upload archive
+        if: success() && inputs.lane == 'build_only'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TempoRep-unuploaded
+          path: |
+            build/*.ipa
+            build/*.dSYM.zip
+          retention-days: 7
+          if-no-files-found: warn
