@@ -99,37 +99,48 @@ struct SetupView: View {
         exerciseDatabase.exercise(id: engine.config.selectedExerciseID)
     }
 
+    /// Four coloured tiles rather than four steppers. Tempo is set once
+    /// per exercise and then left alone, so the home screen shows it as a
+    /// readout and sends editing to the Custom Tempo sheet — where each
+    /// phase has room for a name and an explanation. Reps/sets/rest keep
+    /// their inline steppers below, because those *are* adjusted set to
+    /// set and a sheet would be friction.
     private var tempoSection: some View {
-        VStack(spacing: Spacing.md) {
-            HStack {
-                Spacer()
-                Button {
-                    showCustomTempo = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .font(TempoFont.rounded(.subheadline))
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityLabel(Text("Tempo details"))
-                .sheet(isPresented: $showCustomTempo) {
-                    CustomTempoView(engine: engine)
+        VStack(spacing: Spacing.sm) {
+            Button {
+                showCustomTempo = true
+            } label: {
+                HStack(spacing: Spacing.sm) {
+                    ForEach(Array(engine.config.tempoDigits.enumerated()), id: \.offset) { index, value in
+                        VStack(spacing: Spacing.xs) {
+                            Text(verbatim: format(value))
+                                .font(TempoFont.rounded(.title, weight: .heavy))
+                                .monospacedDigit()
+                                .foregroundStyle(Color.tempoPhase(at: index))
+                                .lineLimit(1)
+                                .minimumScaleFactor(TempoScaleFactor.digit)
+                            Text(Self.tempoLabels[index])
+                                .font(TempoFont.rounded(.caption2, weight: .semibold))
+                                .tracking(TempoTracking.label)
+                                .textCase(.uppercase)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(TempoScaleFactor.digit)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.md)
+                        .background(Color.tempoSunken, in: RoundedRectangle(cornerRadius: CornerRadius.md))
+                    }
                 }
             }
-
-            // A standalone row so the 4 digits center on their own — sharing
-            // the row with the info button (as this used to) pushed them
-            // off-center to make room for it.
-            HStack(spacing: Spacing.lg) {
-                DigitStepper(label: "tempo.control", accessibilityName: "Eccentric duration",
-                             digit: $engine.config.tempoDigits[0])
-                DigitStepper(label: "tempo.hold", accessibilityName: "Pause at bottom duration",
-                             digit: $engine.config.tempoDigits[1])
-                DigitStepper(label: "tempo.drive", accessibilityName: "Concentric duration",
-                             digit: $engine.config.tempoDigits[2])
-                DigitStepper(label: "tempo.hold", accessibilityName: "Pause at top duration",
-                             digit: $engine.config.tempoDigits[3])
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Tempo"))
+            .accessibilityValue(Text(verbatim: tempoAccessibilityReading(engine.config.tempoDigits)))
+            .accessibilityHint(Text("Opens the tempo editor"))
+            .sheet(isPresented: $showCustomTempo) {
+                CustomTempoView(engine: engine)
             }
-            .frame(maxWidth: .infinity)
 
             if let hint = tempoSuggestionHint {
                 Text(verbatim: hint)
@@ -137,6 +148,14 @@ struct SetupView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Canonical order: control, bottom hold, drive, top hold.
+    private static let tempoLabels: [LocalizedStringKey] =
+        ["tempo.control", "tempo.hold", "tempo.drive", "tempo.hold"]
+
+    private func format(_ value: Double) -> String {
+        value.formatted(.number.locale(locale).precision(.fractionLength(0...1)))
     }
 
     /// Shown only while the digits still match the exercise's suggestion —
@@ -252,12 +271,15 @@ struct SetupView: View {
     }
 
     private var countersSection: some View {
-        VStack(spacing: Spacing.sm) {
-            CounterRow(title: "Reps per set", value: $engine.config.repsPerSet, range: 1...30)
-            CounterRow(title: "Sets", value: $engine.config.sets, range: 1...10)
-            CounterRow(title: "Rest between sets", value: $engine.config.restSeconds, range: 15...300, step: 15, unit: " s")
+        VStack(spacing: Spacing.md) {
+            CounterRow(title: "stat.reps", value: $engine.config.repsPerSet, range: 1...30)
+            Divider().overlay(Color.tempoRule)
+            CounterRow(title: "stat.sets", value: $engine.config.sets, range: 1...10)
+            Divider().overlay(Color.tempoRule)
+            CounterRow(title: "stat.rest", value: $engine.config.restSeconds,
+                       range: 15...300, step: 15, unit: "s")
         }
-        .padding(Spacing.xl)
+        .padding(Spacing.lg)
         .background(Color.tempoSurface, in: RoundedRectangle(cornerRadius: CornerRadius.lg))
     }
 
@@ -371,70 +393,9 @@ private struct PresetChip: View {
     }
 }
 
-private struct DigitStepper: View {
-    let label: LocalizedStringKey
-    let accessibilityName: LocalizedStringKey
-    @Binding var digit: Double
-    @Environment(\.locale) private var locale
-    @ScaledMetric(relativeTo: .largeTitle) private var digitSize = TempoMetrics.Display.digit
-
-    var body: some View {
-        VStack(spacing: Spacing.md) {
-            Button {
-                increment()
-            } label: {
-                Image(systemName: "chevron.up")
-                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
-                    .frame(width: TempoMetrics.minTapTarget, height: 32)
-            }
-            .foregroundStyle(Color.accentColor)
-            .accessibilityHidden(true)
-
-            Text(verbatim: digit.formatted(.number.locale(locale).precision(.fractionLength(0...1))))
-                .font(.system(size: digitSize, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .minimumScaleFactor(TempoScaleFactor.digit)
-                .lineLimit(1)
-                .frame(width: TempoMetrics.digitBoxWidth, height: TempoMetrics.digitBoxHeight)
-                .background(Color.tempoSunken, in: RoundedRectangle(cornerRadius: CornerRadius.sm))
-
-            Button {
-                decrement()
-            } label: {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: TempoMetrics.Icon.large, weight: .bold))
-                    .frame(width: TempoMetrics.minTapTarget, height: 32)
-            }
-            .foregroundStyle(Color.accentColor)
-            .accessibilityHidden(true)
-
-            Text(label)
-                .font(TempoFont.rounded(.caption2, weight: .semibold))
-                .foregroundStyle(.secondary)
-        }
-        .sensoryFeedback(.selection, trigger: digit)
-        // A native Stepper presents to VoiceOver as one adjustable element
-        // (swipe up/down to change the value) rather than two separately
-        // unlabeled +/- buttons — this matches that, since 4 of these sit
-        // side by side and "chevron up, button" x4 is meaningless on its own.
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(accessibilityName))
-        .accessibilityValue(Text(verbatim: "\(digit)"))
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: increment()
-            case .decrement: decrement()
-            @unknown default: break
-            }
-        }
-    }
-
-    // Whole seconds only — tempo prescriptions are written in whole
-    // seconds, and half-steps made the digit box read as false precision.
-    private func increment() { digit = min(9, digit.rounded(.down) + 1) }
-    private func decrement() { digit = max(0, digit.rounded(.up) - 1) }
-}
-
+/// A stat readout with the value adjustable in place. Reps, sets and rest
+/// get adjusted between sets, so they keep inline steppers rather than
+/// moving behind a sheet like the tempo does.
 private struct CounterRow: View {
     let title: LocalizedStringKey
     @Binding var value: Int
@@ -445,35 +406,10 @@ private struct CounterRow: View {
 
     var body: some View {
         HStack(spacing: Spacing.md) {
-            Text(title)
-                .font(TempoFont.rounded(.body, weight: .medium))
+            StatBlock(value: "\(value.formatted(.number.locale(locale)))\(unit)", label: title)
             Spacer()
-            Button {
-                decrement()
-            } label: {
-                Image(systemName: "minus")
-                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
-                    .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
-                    .background(Color.tempoSunken, in: Circle())
-            }
-            .foregroundStyle(.primary)
-            .accessibilityHidden(true)
-
-            Text(verbatim: "\(value.formatted(.number.locale(locale)))\(unit)")
-                .font(TempoFont.rounded(.title3, weight: .bold))
-                .monospacedDigit()
-                .frame(minWidth: TempoMetrics.counterValueMinWidth)
-
-            Button {
-                increment()
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
-                    .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
-                    .background(Color.tempoSunken, in: Circle())
-            }
-            .foregroundStyle(.primary)
-            .accessibilityHidden(true)
+            stepper(systemName: "minus", enabled: value > range.lowerBound, action: decrement)
+            stepper(systemName: "plus", enabled: value < range.upperBound, action: increment)
         }
         .sensoryFeedback(.selection, trigger: value)
         .accessibilityElement(children: .ignore)
@@ -486,6 +422,18 @@ private struct CounterRow: View {
             @unknown default: break
             }
         }
+    }
+
+    private func stepper(systemName: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: TempoMetrics.Icon.medium, weight: .bold))
+                .frame(width: TempoMetrics.minTapTarget, height: TempoMetrics.minTapTarget)
+                .background(Color.tempoSunken, in: Circle())
+        }
+        .foregroundStyle(enabled ? AnyShapeStyle(Color.tempoPrimaryText) : AnyShapeStyle(.tertiary))
+        .disabled(!enabled)
+        .accessibilityHidden(true)
     }
 
     private func increment() { value = min(range.upperBound, value + step) }

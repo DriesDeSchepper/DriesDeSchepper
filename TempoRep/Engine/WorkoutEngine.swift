@@ -31,6 +31,9 @@ final class WorkoutEngine {
     private(set) var phaseRemaining: TimeInterval = 0
     private(set) var phaseProgress: Double = 0 // 0...1 within the current segment
     private(set) var lastTimeUnderTension: TimeInterval = 0
+    /// The exercise that was just completed, captured at finish so the
+    /// summary keeps showing it even if the selection changes afterwards.
+    private(set) var lastExerciseName: String?
 
     @ObservationIgnored private var timeline: [Segment] = []
     @ObservationIgnored private var startDate = Date()
@@ -250,6 +253,7 @@ final class WorkoutEngine {
         // rest between sets.
         let timeUnderTension = timeline.filter { $0.rep > 0 || $0.phase == .switchSides }.reduce(0) { $0 + $1.duration }
         lastTimeUnderTension = timeUnderTension
+        lastExerciseName = ExerciseDatabase.shared.exercise(id: config.selectedExerciseID)?.name
 
         history.add(WorkoutRecord(
             id: UUID(),

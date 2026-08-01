@@ -85,6 +85,18 @@ extension Color {
     /// Reserved for future positive states (e.g. a personal best); defined
     /// now so one doesn't get invented ad hoc later.
     static let tempoSuccess = Color.green
+    /// The phase colour for a tempo value by its position in the canonical
+    /// [control, bottom hold, drive, top hold] array. Defined here so the
+    /// setup screen, the history feed and the live workout all colour the
+    /// same position identically.
+    static func tempoPhase(at index: Int) -> Color {
+        switch index {
+        case 0: return .tempoControl
+        case 2: return .tempoDrive
+        default: return .tempoHold
+        }
+    }
+
     /// The filled favorite star. Deliberately not the accent — a yellow
     /// star is near-universal, and using Signal here would make favorited
     /// rows read as "selected" instead.
@@ -120,6 +132,14 @@ enum CornerRadius {
 /// control sizes, and the fixed geometry of the workout display.
 enum TempoMetrics {
     static let minTapTarget: CGFloat = 44
+    /// The tempo-shape bar chart in a history row.
+    static let tempoShapeHeight: CGFloat = 26
+    static let tempoShapeBarRadius: CGFloat = 2
+    static let tempoShapeWidth: CGFloat = 56
+    /// A zero-second phase still draws this much, since "no pause" is
+    /// information worth seeing rather than a gap.
+    static let tempoShapeMinBar: CGFloat = 3
+
     /// Extra top padding on the setup screen, clearing space for where the
     /// title/icons used to sit before the splash screen took over that job.
     static let setupTopInset: CGFloat = 60
@@ -303,6 +323,9 @@ extension TempoMetrics {
         static let finishedTitle: CGFloat = 56
         static let splashWordmark: CGFloat = 40
         static let splashDigit: CGFloat = 44
+        /// The finish screen's headline figure — larger than any text
+        /// style, so it scales via `@ScaledMetric` like the countdown.
+        static let statHero: CGFloat = 76
     }
 }
 
@@ -320,6 +343,11 @@ enum TempoAnimation {
     /// purpose: it's a decorative glow that should linger and trail off,
     /// not a state transition that should feel snappy.
     static let phaseFlashFade: Animation = .easeOut(duration: 0.6)
+
+    /// How long the finish screen's time-under-tension counts up from
+    /// zero. Long enough to register as an earned total rather than a
+    /// number that was simply printed.
+    static let countUpDuration: TimeInterval = 0.9
 
     /// Snappy, slightly overshooting spring for the pacing dot's pop and
     /// the active tempo digit's scale-up.
