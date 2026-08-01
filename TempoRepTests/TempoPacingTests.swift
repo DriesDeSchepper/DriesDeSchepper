@@ -71,8 +71,8 @@ struct TempoPacingTests {
 
     // MARK: - Whole-second stepping
 
-    /// Mirrors the stepper arithmetic in `SetupView.DigitStepper` and
-    /// `CustomTempoView.PhaseRow`.
+    /// Mirrors the stepper arithmetic in `CustomTempoView.PhaseRow`, the
+    /// only place a tempo value can now be changed.
     private func stepUp(_ v: Double) -> Double { min(9, v.rounded(.down) + 1) }
     private func stepDown(_ v: Double) -> Double { max(0, v.rounded(.up) - 1) }
 

@@ -104,8 +104,8 @@ private struct PhaseRow: View {
     }
 
     /// One pill with both buttons and the value, rather than three
-    /// separate controls — matches the compact `DigitStepper`/`CounterRow`
-    /// steppers elsewhere, just wider to comfortably fit "9.5".
+    /// separate controls — matches `SetupView`'s `CounterRow`, just wider,
+    /// since a legacy half-second value still has to fit until it's edited.
     private var stepper: some View {
         HStack(spacing: 0) {
             Button {
