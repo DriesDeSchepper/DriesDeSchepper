@@ -31,6 +31,9 @@ concurrency:
   group: testflight
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   upload:
     runs-on: macos-latest
@@ -39,14 +42,17 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
-          ruby-version: "3.3"
+          ruby-version: "4.0.9"
+          bundler: "4.0.23"
           bundler-cache: true
 
       - name: Build${{ inputs.lane == 'beta' && ' and upload' || '' }}
@@ -92,7 +98,7 @@ jobs:
       # failure, and it is gone with the runner otherwise.
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-logs
           path: |
@@ -106,7 +112,7 @@ jobs:
       # also publish the .ipa as a downloadable artifact.
       - name: Upload archive
         if: success() && inputs.lane == 'build_only'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: TempoRep-unuploaded
           path: |

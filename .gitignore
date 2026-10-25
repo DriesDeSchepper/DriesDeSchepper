@@ -18,10 +18,10 @@ fastlane/README.md
 *.ipa
 *.dSYM.zip
 
-# Bundler. Gemfile.lock is deliberately not committed: the only machine
-# that resolves it is a macOS runner, and a lockfile generated anywhere
-# else pins platform-specific gems that then fail to install there. The
-# Gemfile's version floor is what pins behaviour instead.
+# Bundler. Keep the existing policy of resolving current fastlane releases
+# on each fresh CI setup. Local macOS installs keep their ignored lockfile;
+# bundle update fastlane refreshes that resolution explicitly. Dependencies
+# live outside the source checkout when using Scripts/fastlane-local.sh.
 Gemfile.lock
 .bundle/
 
