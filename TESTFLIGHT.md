@@ -150,6 +150,35 @@ fails after the upload succeeded, or you archive from your own Mac.
 
 ## Troubleshooting
 
+### Local Ruby and fastlane tooling
+
+Use the maintained Ruby 4 toolchain instead of macOS's bundled Ruby. The current
+reviewed setup is Ruby 4.0.9, Bundler 4.0.23 and fastlane 2.241.1 or newer.
+The project keeps its existing open-ended fastlane version floor and ignored
+local lockfile policy. A fresh CI resolution picks current releases; an existing
+local resolution is refreshed explicitly.
+
+```sh
+brew install --skip-link ruby
+./Scripts/fastlane-local.sh --install
+./Scripts/fastlane-local.sh --version
+./Scripts/fastlane-local.sh lanes
+# Refresh the local ignored lockfile when checking for updates:
+./Scripts/fastlane-local.sh --update
+```
+
+The wrapper selects `/opt/homebrew/opt/ruby` explicitly and installs gems under
+`~/.local/share/project-ruby/tempo/ruby4`. It does not replace Apple Ruby or change
+the global shell PATH. `TEMPO_RUBY_ROOT` and `TEMPO_GEM_HOME` can select another
+maintained installation and separate gem directory. The version and lane-listing
+commands do not execute a lane or require Apple credentials.
+
+The ordinary iOS workflow validates Ruby syntax and lists the lanes without
+signing or uploading. The TestFlight workflow remains manual with `build_only`
+as its default. Both actual lanes use credentials/signing; run them only when
+you intend that operation. Ruby 4 support is included in the
+[upstream fastlane releases](https://github.com/fastlane/fastlane/releases).
+
 **"No profiles for 'com.dries.temporep' were found"** — the App ID isn't
 registered (step 2), or the API key isn't Admin (step 4).
 
