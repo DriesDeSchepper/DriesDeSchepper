@@ -158,6 +158,11 @@ The project keeps its existing open-ended fastlane version floor and ignored
 local lockfile policy. A fresh CI resolution picks current releases; an existing
 local resolution is refreshed explicitly.
 
+The Gemfile also requires addressable 2.9.2 or newer and
+google-apis-androidpublisher_v3 0.111.0 or newer, within fastlane's compatible
+dependency ranges. These floors apply to fresh CI setups and local installs;
+the local lockfile remains ignored.
+
 ```sh
 brew install --skip-link ruby
 ./Scripts/fastlane-local.sh --install
