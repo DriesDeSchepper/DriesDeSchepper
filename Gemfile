@@ -10,3 +10,7 @@ gem "fastlane", ">= 2.241.1"
 # Fastlane's dependency constraints continue to define compatible upper bounds.
 gem "addressable", ">= 2.9.2"
 gem "google-apis-androidpublisher_v3", ">= 0.111.0"
+
+# Reviewed compatible floors; retain Fastlane's upper dependency bounds.
+gem "domain_name", ">= 0.7.20261031"
+gem "google-apis-core", ">= 1.4.1"
