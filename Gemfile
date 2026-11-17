@@ -4,7 +4,7 @@ source "https://rubygems.org"
 # No upper bound, because
 # fastlane tracks Apple's APIs and pinning it means a build that stops
 # working the next time App Store Connect changes underneath it.
-gem "fastlane", ">= 2.241.1"
+gem "fastlane", ">= 2.242.0"
 
 # Reviewed transitive floors for both fresh CI and existing local resolutions.
 # Fastlane's dependency constraints continue to define compatible upper bounds.
